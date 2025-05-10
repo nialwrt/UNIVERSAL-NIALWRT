@@ -74,10 +74,10 @@ git checkout $TARGET_TAG
 echo -e "${BLUE}Launching 'make menuconfig'...${NC}"
 make menuconfig
 
-# Start build and log output
-echo -e "${BLUE}Starting build, logging to 'build.log' and 'error.log'...${NC}"
+# Start build 
+echo -e "${BLUE}Starting build...${NC}"
 start_time=$(date +%s)
-make -j$(nproc) > build.log 2> error.log
+make -j$(nproc)
 end_time=$(date +%s)
 
 # Build duration
