@@ -1,3 +1,4 @@
+![Screenshot from 2025-05-11 07-08-38](https://github.com/user-attachments/assets/a2609ec0-e390-4090-98ec-73cac5060836)
 # UNIVERSAL-NIALWRT
 
 **Source:** ImmortalWrt  
@@ -14,10 +15,6 @@ UNIVERSAL-NIALWRT is a minimal and clean automation script that simplifies the p
 
 - **Flexible Configuration**  
   Customize everything through `make menuconfig`, including packages, kernel, and system options.
-
-- **Automatic Logging**  
-  - `build.log`: Captures all build output  
-  - `error.log`: Stores any errors encountered during the build
 
 - **Standalone Script**  
   No dependencies on other scripts or projects — everything is handled within this script.
