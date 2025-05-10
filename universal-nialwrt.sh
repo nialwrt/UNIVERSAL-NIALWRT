@@ -77,7 +77,14 @@ make menuconfig
 # Start build 
 echo -e "${BLUE}Starting build...${NC}"
 start_time=$(date +%s)
-make -j$(nproc)
+
+if make -j$(nproc); then
+    echo -e "${GREEN}Build succeeded.${NC}"
+else
+    echo -e "${RED}Build failed. Running make V=s for detailed error...${NC}"
+    make -j1 V=s
+fi
+
 end_time=$(date +%s)
 
 # Build duration
