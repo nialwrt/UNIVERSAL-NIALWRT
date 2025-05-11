@@ -13,12 +13,23 @@ script_file="$(basename "$0")"
 clear
 echo -e "${BLUE}UNIVERSAL-NIALWRT${NC}"
 echo -e "${BLUE}Select the firmware distribution you want to build:${NC}"
-echo "1) ImmortalWrt"
-echo "2) OpenWrt"
-read -p "Enter your choice [1/2]: " choice
+echo "1) OpenWrt"
+echo "2) OpenWrt-IPQ"
+echo "3) ImmortalWrt"
+read -p "Enter your choice [1/2/3]: " choice
 
 # Define repository and dependencies based on choice
 if [[ "$choice" == "1" ]]; then
+    distro="openwrt"
+    repo="https://github.com/openwrt/openwrt.git"
+    deps="build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext \
+git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget"
+elif [[ "$choice" == "2" ]]; then
+    distro="openwrt-ipq"
+    repo="https://github.com/qosmio/openwrt-ipq.git"
+    deps="build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext \
+git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget"
+elif [[ "$choice" == "3" ]]; then
     distro="immortalwrt"
     repo="https://github.com/immortalwrt/immortalwrt.git"
     deps="ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
@@ -30,11 +41,6 @@ lld llvm lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf pyt
 python3-pip python3-ply python3-docutils python3-pyelftools qemu-utils re2c rsync \
 scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto \
 xxd zlib1g-dev zstd"
-elif [[ "$choice" == "2" ]]; then
-    distro="openwrt"
-    repo="https://github.com/openwrt/openwrt.git"
-    deps="build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext \
-git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget"
 else
     echo -e "${RED}Invalid choice. Exiting.${NC}"
     exit 1
@@ -87,6 +93,12 @@ git tag | sort -V
 echo -ne "${BLUE}Enter a branch or tag to checkout:\a ${NC}"
 read TARGET_TAG
 git checkout $TARGET_TAG
+
+# If openwrt-ipq, apply config
+if [[ "$choice" == "2" ]]; then
+    echo -e "${BLUE}Applying preseeded .config for OpenWrt-IPQ...${NC}"
+    cp nss-setup/config-nss.seed .config
+fi
 
 # Launch the build config menu
 echo -e "${BLUE}Opening configuration menu...\a${NC}"
