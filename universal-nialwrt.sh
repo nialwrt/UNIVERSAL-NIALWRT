@@ -75,7 +75,7 @@ echo -e "${BLUE}Initializing package feeds...${NC}"
 ./scripts/feeds install -a
 
 # Pause for adding custom feeds
-echo -e "${BLUE}You may now add custom feeds if needed.\a${NC}"
+echo -e "${BLUE}You may now add custom feeds if needed.${NC}"
 read -p "Press [Enter] to continue..." temp
 
 # Update feeds again
@@ -90,7 +90,7 @@ echo -e "${BLUE}Available tags:${NC}"
 git tag | sort -V
 
 # Prompt user to checkout branch or tag
-echo -ne "${BLUE}Enter a branch or tag to checkout:\a ${NC}"
+echo -ne "${BLUE}Enter a branch or tag to checkout: ${NC}"
 read TARGET_TAG
 git checkout $TARGET_TAG
 
@@ -101,7 +101,7 @@ if [[ "$choice" == "2" ]]; then
 fi
 
 # Launch the build config menu
-echo -e "${BLUE}Opening configuration menu...\a${NC}"
+echo -e "${BLUE}Opening configuration menu...${NC}"
 make menuconfig
 
 # Start building
@@ -109,11 +109,11 @@ echo -e "${BLUE}Starting the build process...${NC}"
 start_time=$(date +%s)
 
 if make -j$(nproc); then
-    echo -e "${GREEN}Build completed successfully.\a${NC}"
+    echo -e "${GREEN}Build completed successfully.${NC}"
 else
     echo -e "${RED}Build failed. Retrying with detailed output...${NC}"
     make -j1 V=s
-    echo -e "${RED}Build finished with errors.\a${NC}"
+    echo -e "${RED}Build finished with errors.${NC}"
 fi
 
 # Calculate build time
