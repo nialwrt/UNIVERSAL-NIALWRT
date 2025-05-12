@@ -1,5 +1,5 @@
 ![Screenshot from 2025-05-11 07-08-38](https://github.com/user-attachments/assets/a2609ec0-e390-4090-98ec-73cac5060836)
-# Universal-NialWRT Build Script
+# UNIVERSAL-NIALWRT Build Script
 
 Universal-NialWRT is an automated firmware build script supporting OpenWrt, OpenWrt-IPQ, and ImmortalWrt. Designed for ease of use, recovery, and flexibility, it allows users to select a distribution, clone its source, manage feeds, and compile — all while handling errors gracefully.
 
