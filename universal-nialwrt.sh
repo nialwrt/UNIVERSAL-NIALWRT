@@ -72,7 +72,6 @@ cd $distro
 # Update and install feeds
 echo -e "${BLUE}Initializing package feeds...${NC}"
 ./scripts/feeds update -a
-./scripts/feeds install -a
 
 # Pause for adding custom feeds
 echo -e "${BLUE}You may now add custom feeds if needed.${NC}"
