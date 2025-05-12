@@ -77,11 +77,21 @@ echo -e "${BLUE}Initializing package feeds...${NC}"
 echo -e "${BLUE}You may now add custom feeds if needed.${NC}"
 read -p "Press [Enter] to continue..." temp
 
-# Retry if feeds update/install fails
-while ! ./scripts/feeds update -a && ./scripts/feeds install -a; do
-    echo -e "${RED}Feeds update and install failed. Please fix any issues in 'feeds.conf.default' and press Enter to retry...${NC}"
+#!/bin/bash
+
+# Update feeds
+while ! ./scripts/feeds update -a; do
+    echo -e "${RED}Feeds update failed. Please fix any issues in 'feeds.conf.default' and press Enter to retry...${NC}"
     read -r
 done
+
+# Install feeds
+while ! ./scripts/feeds install -a; do
+    echo -e "${RED}Feeds install failed. Please fix any issues and press Enter to retry...${NC}"
+    read -r
+done
+
+echo "Feeds update and install completed successfully."
 
 # Show available branches and tags
 echo -e "${BLUE}Available branches:${NC}"
