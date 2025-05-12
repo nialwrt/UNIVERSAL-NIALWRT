@@ -71,16 +71,17 @@ cd $distro
 
 # Update and install feeds
 echo -e "${BLUE}Initializing package feeds...${NC}"
-./scripts/feeds update -a
+./scripts/feeds update -a && ./scripts/feeds install -a
 
 # Pause for adding custom feeds
 echo -e "${BLUE}You may now add custom feeds if needed.${NC}"
 read -p "Press [Enter] to continue..." temp
 
-# Update feeds again
-echo -e "${BLUE}Refreshing all feeds...${NC}"
-./scripts/feeds update -a
-./scripts/feeds install -a
+# Retry if feeds update/install fails
+while ! ./scripts/feeds update -a && ./scripts/feeds install -a; do
+    echo -e "${RED}Feeds update and install failed. Please fix any issues in 'feeds.conf.default' and press Enter to retry...${NC}"
+    read -r
+done
 
 # Show available branches and tags
 echo -e "${BLUE}Available branches:${NC}"
@@ -89,9 +90,15 @@ echo -e "${BLUE}Available tags:${NC}"
 git tag | sort -V
 
 # Prompt user to checkout branch or tag
-echo -ne "${BLUE}Enter a branch or tag to checkout: ${NC}"
-read TARGET_TAG
-git checkout $TARGET_TAG
+while true; do
+    echo -ne "${BLUE}Enter a branch or tag to checkout: ${NC}"
+    read TARGET_TAG
+    if git checkout $TARGET_TAG; then
+        break
+    else
+        echo -e "${RED}Invalid branch/tag. Please try again.${NC}"
+    fi
+done
 
 # If openwrt-ipq, apply config
 if [[ "$choice" == "2" ]]; then
@@ -99,28 +106,47 @@ if [[ "$choice" == "2" ]]; then
     cp nss-setup/config-nss.seed .config
 fi
 
+# Only for openwrt-ipq, run make defconfig on first compile
+if [[ "$choice" == "2" ]]; then
+    echo -e "${BLUE}Running 'make defconfig' for OpenWrt-IPQ...${NC}"
+    make defconfig
+fi
+
 # Launch the build config menu
 echo -e "${BLUE}Opening configuration menu...${NC}"
 make menuconfig
 
-# Start building
-echo -e "${BLUE}Starting the build process...${NC}"
-start_time=$(date +%s)
+# Recompile loop until success
+while true; do
+    echo -e "${BLUE}Starting the build process...${NC}"
+    start_time=$(date +%s)
+    if make -j"$(nproc)"; then
+        echo -e "${GREEN}Build completed successfully.${NC}"
+        break
+    else
+        echo -e "${RED}Build failed. Retrying with detailed output...${NC}"
+        make -j1 V=s
+        echo -e "${RED}Error encountered. Please fix the issue and press Enter to continue...${NC}"
+        read -r
 
-if make -j$(nproc); then
-    echo -e "${GREEN}Build completed successfully.${NC}"
-else
-    echo -e "${RED}Build failed. Retrying with detailed output...${NC}"
-    make -j1 V=s
-    echo -e "${RED}Build finished with errors.${NC}"
-fi
+        # Retry feeds update/install if there's an issue
+        while ! ./scripts/feeds update -a && ./scripts/feeds install -a; do
+            echo -e "${RED}Feeds update and install failed. Please fix any issues in 'feeds.conf.default' and press Enter to retry...${NC}"
+            read -r
+        done
 
-# Calculate build time
-end_time=$(date +%s)
-duration=$((end_time - start_time))
-hours=$((duration / 3600))
-minutes=$(((duration % 3600) / 60))
-echo -e "${BLUE}Total build time: ${hours} hour(s) and ${minutes} minute(s).${NC}"
+        # Run make defconfig for all distros after fix
+        echo -e "${BLUE}Running 'make defconfig' to initialize clean configuration after failure...${NC}"
+        make defconfig
+    fi
+    end_time=$(date +%s)
+    duration=$((end_time - start_time))
+    hours=$((duration / 3600))
+    minutes=$(((duration % 3600) / 60))
+    echo -e "${BLUE}Build attempt duration: ${hours} hour(s) and ${minutes} minute(s).${NC}"
+    echo -e "${RED}You may fix the issue, then press Enter to retry build...${NC}"
+    read -r
+done
 
 # Clean up script
 cd ..
