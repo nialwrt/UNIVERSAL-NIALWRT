@@ -12,8 +12,12 @@ script_file="$(basename "$0")"
 
 # Clear screen and print title
 clear
-echo -e "${BLUE}${BOLD}UNIVERSAL-NIALWRT Firmware Builder${NC}"
-echo -e "${BLUE}Select your desired firmware distribution:${NC}"
+echo -e "\e[34m--------------------------------------\e[0m"
+echo -e "\e[34m  UNIVERSAL-NIALWRT Firmware Build\e[0m"
+echo -e "\e[34m  github.com/nialwrt/AW1K-NIALWRT\e[0m"
+echo -e "\e[34m  Telegram: @NIALVPN\e[0m"
+echo -e "\e[34m--------------------------------------\e[0m"
+echo -e "${BLUE}Select firmware distribution:${NC}"
 echo "1) OpenWrt"
 echo "2) OpenWrt-IPQ"
 echo "3) ImmortalWrt"
