@@ -275,4 +275,4 @@ else
     fresh_build
 fi
 
-echo -e "${BLUE}Script finished.${NC}"
+echo -e "${
