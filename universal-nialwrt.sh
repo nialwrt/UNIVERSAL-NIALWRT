@@ -53,8 +53,8 @@ fresh_build() {
     sudo apt update -y
     sudo apt install -y "$deps"
 
-    # Remove old directory if exists
-    [ -d "$distro" ] && echo -e "${BLUE}Removing previous '${distro}' directory...${NC}" && rm -rf "$distro"
+    # Remove old directory if exists (sudah dipindahkan ke main script)
+    # [ -d "$distro" ] && echo -e "${BLUE}Removing previous '${distro}' directory...${NC}" && rm -rf "$distro"
 
     # Clone selected repo
     echo -e "${BLUE}Cloning repository...${NC}"
@@ -150,7 +150,7 @@ recompile() {
         else
             echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Try again.${NC}"
         fi
-    done
+    }
 
     # Run make defconfig
     echo -e "${BLUE}Running '${BOLD}make defconfig${NC}${BLUE}'...${NC}"
@@ -185,7 +185,7 @@ start_build() {
         echo -e "${BLUE}Running '${BOLD}make defconfig${NC}${BLUE}'...${NC}"
         make defconfig
 
-        # Ask if user wants to open menuconfig
+        # Ask if user wants to open menuconfig (PILIHAN saat error recovery)
         read -p "$(echo -e ${BLUE}Do you want to open ${BOLD}menuconfig${NC}${BLUE} to re-select packages? [y/N]: ${NC})" mc_retry
         if [[ "$mc_retry" == "y" || "$mc_retry" == "Y" ]]; then
             make menuconfig
@@ -223,23 +223,40 @@ if [[ -d "immortalwrt" ]]; then existing_dirs+=("immortalwrt"); fi
 if [[ ${#existing_dirs[@]} -gt 0 ]]; then
     echo -e "${BLUE}Found existing firmware directories:${NC}"
     echo "What do you want to do?"
-    echo "0) Fresh build (removes all existing directories)"
-    for i in "${!existing_dirs[@]}"; do
-        echo "$((i+1))) Recompile ${existing_dirs[$i]}"
-    done
-    read -p "Enter your choice [0-${#existing_dirs[@]}]: " build_choice
+    echo "0) Recompile"
+    echo "1) Fresh build"
+    read -p "Enter your choice [0/1]: " build_choice
 
     if [[ "$build_choice" == "0" ]]; then
-        echo -e "${BLUE}Performing fresh build and removing existing directories...${NC}"
-        for dir in "${existing_dirs[@]}"; do
-            echo -e "${BLUE}Removing directory '${dir}'...${NC}"
-            rm -rf "$dir"
+        echo -e "${BLUE}Which distro do you want to recompile?${NC}"
+        for i in "${!existing_dirs[@]}"; do
+            echo "$((i+1))) ${existing_dirs[$i]}"
         done
-        fresh_build
-    elif [[ "$build_choice" -ge 1 && "$build_choice" -le "${#existing_dirs[@]}" ]]; then
-        selected_dir="${existing_dirs[$((build_choice-1))]}"
-        echo -e "${BLUE}Recompiling ${BOLD}${selected_dir}${NC}${BLUE}...${NC}"
-        recompile "$selected_dir" # Pass the selected directory to recompile function
+        read -p "Enter the number of the distro to recompile: " recompile_choice
+        if [[ "$recompile_choice" -ge 1 && "$recompile_choice" -le "${#existing_dirs[@]}" ]]; then
+            selected_dir="${existing_dirs[$((recompile_choice-1))]}"
+            echo -e "${BLUE}Recompiling ${BOLD}${selected_dir}${NC}${BLUE}...${NC}"
+            recompile "$selected_dir"
+        else
+            echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Exiting.${NC}"
+            exit 1
+        fi
+    elif [[ "$build_choice" == "1" ]]; then
+        echo -e "${BLUE}Which distro do you want to perform a fresh build on?${NC}"
+        for i in "${!existing_dirs[@]}"; do
+            echo "$((i+1))) ${existing_dirs[$i]}"
+        done
+        read -p "Enter the number of the distro to fresh build: " fresh_build_choice
+        if [[ "$fresh_build_choice" -ge 1 && "$fresh_build_choice" -le "${#existing_dirs[@]}" ]]; then
+            selected_dir="${existing_dirs[$((fresh_build_choice-1))]}"
+            echo -e "${BLUE}Performing fresh build for ${BOLD}${selected_dir}${NC}${BLUE}...${NC}"
+            # Hapus hanya direktori yang dipilih sebelum memanggil fresh_build
+            [ -d "$selected_dir" ] && echo -e "${BLUE}Removing existing '${selected_dir}' directory...${NC}" && rm -rf "$selected_dir"
+            fresh_build # Fungsi fresh_build akan menangani pemilihan distro lagi
+        else
+            echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Exiting.${NC}"
+            exit 1
+        fi
     else
         echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Exiting.${NC}"
         exit 1
