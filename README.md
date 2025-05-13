@@ -9,7 +9,7 @@ UNIVERSAL-NIALWRT is a versatile OpenWrt build script offering support for multi
 
 ## Features
 * **Multi-Distribution Support:** Enables building firmware for OpenWrt, OpenWrt-IPQ, and ImmortalWrt.
-* **Automated Build Process:** Simplifies the entire build流程 from dependency installation to the final firmware image.
+* **Automated Build Process:** Simplifies the entire build from dependency installation to the final firmware image.
 * **Smart Feed Management:** Includes automated handling of package feeds with error recovery.
 * **Customizable via Menuconfig:** Allows full customization of the build configuration using `make menuconfig`.
 * **Branch/Tag Selection:** Supports building from specific branches or tags of the chosen distribution.
