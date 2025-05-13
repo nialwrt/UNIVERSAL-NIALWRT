@@ -185,7 +185,7 @@ start_build() {
         echo -e "${BLUE}Running '${BOLD}make defconfig${NC}${BLUE}'...${NC}"
         make defconfig
 
-        # Ask if user wants to open menuconfig
+        # Ask if user wants to open menuconfig (PILIHAN saat error recovery)
         read -p "$(echo -e ${BLUE}Do you want to open ${BOLD}menuconfig${NC}${BLUE} to re-select packages? [y/N]: ${NC})" mc_retry
         if [[ "$mc_retry" == "y" || "$mc_retry" == "Y" ]]; then
             make menuconfig
@@ -218,7 +218,14 @@ print_banner
 declare -a existing_dirs=()
 if [[ -d "openwrt" ]]; then existing_dirs+=("openwrt"); fi
 if [[ -d "openwrt-ipq" ]]; then existing_dirs+=("openwrt-ipq"); fi
-if [[ -d "immortalwrt" ]]; then existing_dirs+=("immortalwrt"); fi
+if [[ -d "immortalwrt" ]]; then
+    echo -e "${GREEN}DEBUG: Folder immortalwrt TERDETEKSI.${NC}"
+    existing_dirs+=("immortalwrt")
+else
+    echo -e "${RED}DEBUG: Folder immortalwrt TIDAK terdeteksi.${NC}"
+fi
+
+echo -e "${BLUE}DEBUG: Isi array existing_dirs: ${existing_dirs[@]}${NC}"
 
 if [[ ${#existing_dirs[@]} -gt 0 ]]; then
     echo -e "${BLUE}Found existing firmware directories:${NC}"
