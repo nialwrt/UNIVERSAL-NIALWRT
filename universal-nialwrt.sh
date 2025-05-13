@@ -12,7 +12,7 @@ script_file="$(basename "$0")"
 
 # Clear screen and print title
 clear
-echo -e "${BLUE}${BOLD}UNIVERSAL-NIALWRT${NC}"
+echo -e "${BLUE}${BOLD}UNIVERSAL-NIALWRT Firmware Builder${NC}"
 echo -e "${BLUE}Select your desired firmware distribution:${NC}"
 echo "1) OpenWrt"
 echo "2) OpenWrt-IPQ"
