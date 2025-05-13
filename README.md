@@ -5,7 +5,7 @@
 
 ## UNIVERSAL-NIALWRT Firmware Builder
 
-**Universal-NialWRT** automates firmware builds for OpenWrt, OpenWrt-IPQ, and ImmortalWrt, focusing on ease of use and error recovery.
+* Automated build script for OpenWrt, OpenWrt-IPQ, and ImmortalWrt firmware.
 
 ## Key Features
 
