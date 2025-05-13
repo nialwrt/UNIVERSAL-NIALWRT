@@ -264,3 +264,15 @@ if [[ ${#existing_dirs[@]} -gt 0 ]]; then
             fresh_build # Fungsi fresh_build akan menangani pemilihan distro lagi
         else
             echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Exiting.${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Exiting.${NC}"
+        exit 1
+    fi
+else
+    echo -e "${BLUE}No existing firmware directories found. Starting a fresh build.${NC}"
+    fresh_build
+fi
+
+echo -e "${BLUE}Script finished.${NC}"
