@@ -45,7 +45,7 @@ setup_feeds() {
      while true; do
         echo -e "${BLUE}Running ./scripts/feeds update -a and ./scripts/feeds install -a...${NC}"
         if ./scripts/feeds update -a && ./scripts/feeds install -a; then
-            echo -e "${GREEN}Feeds update/install successful.${NC}"
+            echo -e "${GREEN}Feeds setup successful.${NC}"
             break
         else
             echo -e "${RED}${BOLD}Error:${NC} ${RED}Feeds update/install failed. Please address the issue.${NC}"
@@ -171,10 +171,10 @@ start_build() {
 # Function to perform common build steps after cloning or entering existing dir
 # Assumes script is already in the source directory
 perform_build_steps() {
-    local distro_type="$1"
+    local distro_type="$1" # Pass distro type here
     setup_feeds
     select_and_checkout_git
-    apply_seed_config "$distro_type" # Pass distro type to apply_seed_config
+    apply_seed_config "$distro_type" # Use the passed distro type
     run_menuconfig
     start_build
 }
@@ -191,7 +191,10 @@ echo "3) ImmortalWrt"
 echo -ne "${BLUE}Enter your choice [1/2/3]: ${NC}"
 read distro_choice
 
-local distro_name repo_url deps_list
+# Deklarasikan variabel di sini tanpa 'local'
+distro_name=""
+repo_url=""
+deps_list=""
 
 if [[ "$distro_choice" == "1" ]]; then
     distro_name="openwrt"
@@ -211,6 +214,7 @@ else
 fi
 
 # --- Step 2: Install Dependencies ---
+# Install deps *after* selecting distro, but before checking/cloning
 install_deps "$deps_list"
 
 # --- Step 3: Check if Directory Exists and Determine Action ---
@@ -251,7 +255,7 @@ if [[ -d "$distro_name" ]]; then
 
         # Enter source directory and perform build steps
         cd "$distro_name" || { echo -e "${RED}${BOLD}Error:${NC} ${RED}Failed to change directory to '$distro_name'. Exiting.${NC}"; exit 1; }
-        perform_build_steps "$distro_name"
+        perform_build_steps "$distro_name" # Pass the distro name here
         cd .. || { echo -e "${RED}${BOLD}Error:${NC} ${RED}Failed to return to original directory.${NC}"; exit 1; } # Go back
 
     elif [[ "$action_choice" == "2" ]]; then
@@ -275,7 +279,7 @@ if [[ -d "$distro_name" ]]; then
         elif [[ "$recompile_mode" == "2" ]]; then
             echo -e "${BLUE}\n--- Recompiling with feeds update ---${NC}"
             # Perform the full build steps including feeds update
-            perform_build_steps "$distro_name" # This includes feeds, checkout, config, build
+            perform_build_steps "$distro_name" # Pass the distro name here
         else
             echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Exiting.${NC}"
             cd .. || { echo -e "${RED}${BOLD}Error:${NC} ${RED}Failed to return to original directory.${NC}"; exit 1; }
@@ -302,7 +306,7 @@ else
 
     # Enter source directory and perform build steps
     cd "$distro_name" || { echo -e "${RED}${BOLD}Error:${NC} ${RED}Failed to change directory to '$distro_name'. Exiting.${NC}"; exit 1; }
-    perform_build_steps "$distro_name"
+    perform_build_steps "$distro_name" # Pass the distro name here
     cd .. || { echo -e "${RED}${BOLD}Error:${NC} ${RED}Failed to return to original directory.${NC}"; exit 1; } # Go back
 fi
 
