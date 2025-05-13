@@ -134,10 +134,12 @@ recompile() {
     echo -e "${BLUE}You may now add custom feeds manually if needed.${NC}"
     read -p "Press Enter to continue after adding feeds..." temp
 
-    # Force re-run feeds update and install AFTER user input
-    echo -e "${BLUE}Forcing feeds update and install...${NC}"
-    ./scripts/feeds update -a
-    ./scripts/feeds install -a
+    # Re-run feeds in loop if error
+    while true; do
+        ./scripts/feeds update -a && ./scripts/feeds install -a && break
+        echo -e "${RED}${BOLD}Error:${NC} ${RED}Feeds update/install failed. Please address the issue, then press Enter to retry...${NC}"
+        read -r
+    done
 
     # Show branches and tags
     echo -e "${BLUE}Current branch/tag:${NC}"
