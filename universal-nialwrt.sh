@@ -52,8 +52,8 @@ rebuild_menu() {
     cd "$distro"
     while true; do
         echo -e "${BLUE}Select rebuild option:${NC}"
-        echo -e "${BLUE}1) Quick Rebuild: Use existing config${NC}"
-        echo -e "${BLUE}2) Update pkgs/fw: Get latest (may take a while)${NC}"
+        echo -e "1) Quick Rebuild: Use existing config"
+        echo -e "2) Update pkgs/fw: Get latest (may take a while)"
         read -p "Enter choice [1/2]: " rebuild_choice
 
         case "$rebuild_choice" in
