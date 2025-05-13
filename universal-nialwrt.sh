@@ -266,13 +266,16 @@ if [[ -d "$distro_name" ]]; then
 
         # Ask user for recompile mode within the selected directory
         echo -e "${BLUE}Recompile mode:${NC}"
-        echo "1) Recompile with current configuration (faster)"
+        echo "1) Recompile with current configuration (potentially faster)"
         echo "2) Recompile and update/install feeds (for version change or new feeds)"
         echo -ne "${BLUE}Enter your choice [1/2]: ${NC}"
         read recompile_mode
 
         if [[ "$recompile_mode" == "1" ]]; then
             echo -e "${BLUE}\n--- Recompiling with current configuration ---${NC}"
+            # Tambahkan langkah setup feeds dan checkout git (opsional)
+            setup_feeds
+            select_and_checkout_git
             echo -e "${BLUE}Running '${BOLD}make defconfig${NC}${BLUE}'...${NC}"
             make defconfig
             start_build
@@ -300,14 +303,4 @@ else
     echo -e "${BLUE}Cloning repository ${repo_url} into ${distro_name}...${NC}"
     git clone "$repo_url" "$distro_name"
      if [ $? -ne 0 ]; then
-         echo -e "${RED}${BOLD}Error:${NC} ${RED}Failed to clone repository. Exiting.${NC}"
-         exit 1
-     fi
-
-    # Enter source directory and perform build steps
-    cd "$distro_name" || { echo -e "${RED}${BOLD}Error:${NC} ${RED}Failed to change directory to '$distro_name'. Exiting.${NC}"; exit 1; }
-    perform_build_steps "$distro_name" # Pass the distro name here
-    cd .. || { echo -e "${RED}${BOLD}Error:${NC} ${RED}Failed to return to original directory.${NC}"; exit 1; } # Go back
-fi
-
-echo -e "${BLUE}\n--- Script finished ---${NC}"
+         echo -e "${RED
