@@ -12,11 +12,11 @@ script_file="$(basename "$0")"
 
 # Function to print banner
 print_banner() {
-    echo -e "\e[34m--------------------------------------\e[0m"
-    echo -e "\e[34m  UNIVERSAL-NIALWRT Firmware Build  \e[0m"
-    echo -e "\e[34m  by nialwrt                        \e[0m"
-    echo -e "\e[34m  Telegram: @NIALVPN                 \e[0m"
-    echo -e "\e[34m--------------------------------------\e[0m"
+    echo -e "${BLUE}--------------------------------------${NC}"
+    echo -e "${BLUE}  UNIVERSAL-NIALWRT Firmware Build  ${NC}"
+    echo -e "${BLUE}  by nialwrt                        ${NC}"
+    echo -e "${BLUE}  Telegram: @NIALVPN                 ${NC}"
+    echo -e "${BLUE}--------------------------------------${NC}"
 }
 
 # Function to perform a fresh build (disc clean)
@@ -90,7 +90,7 @@ fresh_build() {
         else
             echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Try again.${NC}"
         fi
-    end
+    done
 
     # Apply seed config if needed
     if [[ "$choice" == "2" ]]; then
@@ -200,6 +200,13 @@ start_build() {
 
     if make -j"$(nproc)"; then
         echo -e "${GREEN}${BOLD}Build completed successfully.${NC}"
+        # Duration
+        end_time=$(date +%s)
+        duration=$((end_time - start_time))
+        hours=$((duration / 3600))
+        minutes=$(((duration % 3600) / 60))
+        echo -e "${BLUE}Build duration: ${BOLD}${hours} hour(s)${NC}${BLUE} and ${BOLD}${minutes} minute(s)${NC}${BLUE}.${NC}"
+        return 0 # Indicate success
     else
         echo -e "${RED}${BOLD}Error:${NC} ${RED}Build failed. Retrying with verbose output...${NC}"
         make -j1 V=s
@@ -221,19 +228,18 @@ start_build() {
 
         if make -j"$(nproc)"; then
             echo -e "${GREEN}${BOLD}Rebuild completed successfully after error recovery.${NC}"
+            # Duration
+            end_time=$(date +%s)
+            duration=$((end_time - start_time))
+            hours=$((duration / 3600))
+            minutes=$(((duration % 3600) / 60))
+            echo -e "${BLUE}Build duration: ${BOLD}${hours} hour(s)${NC}${BLUE} and ${BOLD}${minutes} minute(s)${NC}${BLUE}.${NC}"
+            return 0 # Indicate success
         else
             echo -e "${RED}${BOLD}Error:${NC} ${RED}Rebuild failed again. Please check the build log carefully.${NC}"
+            return 1 # Indicate failure
         fi
-        break # Keluar dari loop setelah satu kali percobaan rebuild setelah error
     fi
-
-    # Duration
-    end_time=$(date +%s)
-    duration=$((end_time - start_time))
-    hours=$((duration / 3600))
-    minutes=$(((duration % 3600) / 60))
-    echo -e "${BLUE}Build duration: ${BOLD}${hours} hour(s)${NC}${BLUE} and ${BOLD}${minutes} minute(s)${NC}${BLUE}.${NC}"
-    break # Keluar dari loop jika build awal berhasil
 }
 
 # --- Main Script ---
@@ -256,7 +262,7 @@ if [[ ${#existing_dirs[@]} -gt 0 ]]; then
         echo -e "${BLUE}Which distro do you want to perform a fresh build on?${NC}"
         for i in "${!existing_dirs[@]}"; do
             echo "$((i+1))) ${existing_dirs[$i]}"
-        end
+        done
         read -p "Enter the number of the distro to fresh build: " fresh_build_choice
         if [[ "$fresh_build_choice" -ge 1 && "$fresh_build_choice" -le "${#existing_dirs[@]}" ]]; then
             selected_dir="${existing_dirs[$((fresh_build_choice-1))]}"
@@ -272,7 +278,7 @@ if [[ ${#existing_dirs[@]} -gt 0 ]]; then
         echo -e "${BLUE}Which distro do you want to rebuild?${NC}"
         for i in "${!existing_dirs[@]}"; do
             echo "$((i+1))) ${existing_dirs[$i]}"
-        end
+        done
         read -p "Enter the number of the distro to rebuild: " recompile_choice # Menggunakan variabel yang berbeda untuk kejelasan
         if [[ "$recompile_choice" -ge 1 && "$recompile_choice" -le "${#existing_dirs[@]}" ]]; then
             selected_dir="${existing_dirs[$((recompile_choice-1))]}"
