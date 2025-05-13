@@ -248,11 +248,11 @@ if [[ -d "immortalwrt" ]]; then existing_dirs+=("immortalwrt"); fi
 if [[ ${#existing_dirs[@]} -gt 0 ]]; then
     echo -e "${BLUE}Found existing firmware directories:${NC}"
     echo "What do you want to do?"
-    echo "0) Recompile"
-    echo "1) Fresh build"
-    read -p "Enter your choice [0/1]: " build_choice
+    echo "1) Recompile"
+    echo "2) Fresh build"
+    read -p "Enter your choice [1/2]: " build_choice
 
-    if [[ "$build_choice" == "0" ]]; then
+    if [[ "$build_choice" == "1" ]]; then
         echo -e "${BLUE}Which distro do you want to recompile?${NC}"
         for i in "${!existing_dirs[@]}"; do
             echo "$((i+1))) ${existing_dirs[$i]}"
@@ -266,7 +266,7 @@ if [[ ${#existing_dirs[@]} -gt 0 ]]; then
             echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Exiting.${NC}"
             exit 1
         fi
-    elif [[ "$build_choice" == "1" ]]; then
+    elif [[ "$build_choice" == "2" ]]; then
         echo -e "${BLUE}Which distro do you want to perform a fresh build on?${NC}"
         for i in "${!existing_dirs[@]}"; do
             echo "$((i+1))) ${existing_dirs[$i]}"
