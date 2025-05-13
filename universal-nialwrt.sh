@@ -30,6 +30,7 @@ fresh_build() {
     read -p "Enter choice [1/2/3]: " choice
 
     # Set repo and dependencies
+    local distro repo deps
     if [[ "$choice" == "1" ]]; then
         distro="openwrt"
         repo="https://github.com/openwrt/openwrt.git"
@@ -102,30 +103,27 @@ fresh_build() {
         make defconfig
     fi
 
-    # Ask if user wants to open menuconfig
-    read -p "$(echo -e ${BLUE}Do you want to open ${BOLD}menuconfig${NC}${BLUE} now? [y/N]: ${NC})" mc
-    if [[ "$mc" == "y" || "$mc" == "Y" ]]; then
-        make menuconfig
-    fi
+    # Open menuconfig (WAJIB untuk fresh build)
+    echo -e "${BLUE}Opening ${BOLD}menuconfig${NC}${BLUE}...${NC}"
+    make menuconfig
 
     # Start build
     start_build
 }
 
-# Function to perform a recompile
+# Function to perform a recompile for a specific distro
 recompile() {
-    echo -e "${BLUE}${BOLD}Performing a recompile...${NC}"
-    # Check if in the correct directory
-    if [[ -d "openwrt" ]]; then
-        cd "openwrt"
-    elif [[ -d "openwrt-ipq" ]]; then
-        cd "openwrt-ipq"
-    elif [[ -d "immortalwrt" ]]; then
-        cd "immortalwrt"
-    else
-        echo -e "${RED}${BOLD}Error:${NC} ${RED}No firmware directory found. Please run the script without existing directories for a fresh build.${NC}"
+    local distro_dir="$1"
+    echo -e "${BLUE}${BOLD}Performing a recompile for ${distro_dir}...${NC}"
+
+    # Check if the directory exists
+    if [[ ! -d "$distro_dir" ]]; then
+        echo -e "${RED}${BOLD}Error:${NC} ${RED}Directory '${distro_dir}' not found. Exiting recompile.${NC}"
         return 1
     fi
+
+    # Enter the distro directory
+    cd "$distro_dir"
 
     # Feeds update and install
     echo -e "${BLUE}Updating and installing feeds...${NC}"
@@ -154,18 +152,20 @@ recompile() {
         fi
     done
 
-    # Ask if user wants to open menuconfig
-    read -p "$(echo -e ${BLUE}Do you want to open ${BOLD}menuconfig${NC}${BLUE} now? [y/N]: ${NC})" mc
-    if [[ "$mc" == "y" || "$mc" == "Y" ]]; then
-        make menuconfig
-    fi
-
     # Run make defconfig
     echo -e "${BLUE}Running '${BOLD}make defconfig${NC}${BLUE}'...${NC}"
     make defconfig
 
+    # Ask if user wants to open menuconfig (PILIHAN untuk recompile)
+    read -p "$(echo -e ${BLUE}Do you want to open ${BOLD}menuconfig${NC}${BLUE} to re-select packages? [y/N]: ${NC})" mc
+    if [[ "$mc" == "y" || "$mc" == "Y" ]]; then
+        make menuconfig
+    fi
+
     # Start build
     start_build
+
+    cd .. # Go back to the script's original directory
 }
 
 # Function to start the build process
@@ -176,7 +176,30 @@ start_build() {
     if make -j"$(nproc)"; then
         echo -e "${GREEN}${BOLD}Build completed successfully.${NC}"
     else
-        echo -e "${RED}${BOLD}Error:${NC} ${RED}Build failed. Please check the build log.${NC}"
+        echo -e "${RED}${BOLD}Error:${NC} ${RED}Build failed. Retrying with verbose output...${NC}"
+        make -j1 V=s
+
+        echo -e "${RED}Please fix the error, then press Enter to continue for recompile...${NC}"
+        read -r
+
+        echo -e "${BLUE}Running '${BOLD}make defconfig${NC}${BLUE}'...${NC}"
+        make defconfig
+
+        # Ask if user wants to open menuconfig
+        read -p "$(echo -e ${BLUE}Do you want to open ${BOLD}menuconfig${NC}${BLUE} to re-select packages? [y/N]: ${NC})" mc_retry
+        if [[ "$mc_retry" == "y" || "$mc_retry" == "Y" ]]; then
+            make menuconfig
+        fi
+
+        echo -e "${BLUE}Attempting rebuild...${NC}"
+        make -j"$(nproc)" # Coba rebuild lagi setelah defconfig dan menuconfig (opsional)
+
+        if make -j"$(nproc)"; then
+            echo -e "${GREEN}${BOLD}Rebuild completed successfully after error recovery.${NC}"
+        else
+            echo -e "${RED}${BOLD}Error:${NC} ${RED}Rebuild failed again. Please check the build log carefully.${NC}"
+        fi
+        break # Keluar dari loop setelah satu kali percobaan rebuild setelah error
     fi
 
     # Duration
@@ -185,26 +208,38 @@ start_build() {
     hours=$((duration / 3600))
     minutes=$(((duration % 3600) / 60))
     echo -e "${BLUE}Build duration: ${BOLD}${hours} hour(s)${NC}${BLUE} and ${BOLD}${minutes} minute(s)${NC}${BLUE}.${NC}"
-
-    cd .. # Go back to the script's directory
+    break # Keluar dari loop jika build awal berhasil
 }
 
 # --- Main Script ---
 clear
 print_banner
 
-# Check for existing firmware directories
-if [[ -d "openwrt" ]] || [[ -d "openwrt-ipq" ]] || [[ -d "immortalwrt" ]]; then
-    echo -e "${BLUE}Found existing firmware directories.${NC}"
-    echo "What do you want to do?"
-    echo "1) Fresh build (removes existing directory)"
-    echo "2) Recompile (uses existing configuration)"
-    read -p "Enter choice [1/2]: " build_choice
+declare -a existing_dirs=()
+if [[ -d "openwrt" ]]; then existing_dirs+=("openwrt"); fi
+if [[ -d "openwrt-ipq" ]]; then existing_dirs+=("openwrt-ipq"); fi
+if [[ -d "immortalwrt" ]]; then existing_dirs+=("immortalwrt"); fi
 
-    if [[ "$build_choice" == "1" ]]; then
+if [[ ${#existing_dirs[@]} -gt 0 ]]; then
+    echo -e "${BLUE}Found existing firmware directories:${NC}"
+    echo "What do you want to do?"
+    echo "0) Fresh build (removes all existing directories)"
+    for i in "${!existing_dirs[@]}"; do
+        echo "$((i+1))) Recompile ${existing_dirs[$i]}"
+    done
+    read -p "Enter your choice [0-${#existing_dirs[@]}]: " build_choice
+
+    if [[ "$build_choice" == "0" ]]; then
+        echo -e "${BLUE}Performing fresh build and removing existing directories...${NC}"
+        for dir in "${existing_dirs[@]}"; do
+            echo -e "${BLUE}Removing directory '${dir}'...${NC}"
+            rm -rf "$dir"
+        done
         fresh_build
-    elif [[ "$build_choice" == "2" ]]; then
-        recompile
+    elif [[ "$build_choice" -ge 1 && "$build_choice" -le "${#existing_dirs[@]}" ]]; then
+        selected_dir="${existing_dirs[$((build_choice-1))]}"
+        echo -e "${BLUE}Recompiling ${BOLD}${selected_dir}${NC}${BLUE}...${NC}"
+        recompile "$selected_dir" # Pass the selected directory to recompile function
     else
         echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Exiting.${NC}"
         exit 1
