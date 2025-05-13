@@ -14,14 +14,9 @@ UNIVERSAL-NIALWRT is a versatile OpenWrt build script offering support for multi
 * **Customizable via Menuconfig:** Allows full customization of the build configuration using `make menuconfig`.
 * **Branch/Tag Selection:** Supports building from specific branches or tags of the chosen distribution.
 
-## Supported Distributions
-* OpenWrt ([https://openwrt.org/](https://openwrt.org/))
-* OpenWrt-IPQ ([https://github.com/qosmio/openwrt-ipq](https://github.com/qosmio/openwrt-ipq))
-* ImmortalWrt ([https://github.com/immortalwrt/immortalwrt](https://github.com/immortalwrt/immortalwrt))
-
 ## Requirements
-* Ubuntu 22.04 LTS or newer
 * Internet connection
+* Ubuntu 22.04 LTS or newer
 * Adequate disk space and RAM
 * Basic terminal usage knowledge
 
