@@ -53,9 +53,6 @@ fresh_build() {
     sudo apt update -y
     sudo apt install -y "$deps"
 
-    # Remove old directory if exists (sudah dipindahkan ke main script)
-    # [ -d "$distro" ] && echo -e "${BLUE}Removing previous '${distro}' directory...${NC}" && rm -rf "$distro"
-
     # Clone selected repo
     echo -e "${BLUE}Cloning repository...${NC}"
     git clone "$repo" "$distro"
@@ -93,7 +90,7 @@ fresh_build() {
         else
             echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Try again.${NC}"
         fi
-    done
+    end
 
     # Apply seed config if needed
     if [[ "$choice" == "2" ]]; then
@@ -125,56 +122,73 @@ recompile() {
     # Enter the distro directory
     cd "$distro_dir"
 
-    # Feeds update and install (initial)
-    echo -e "${BLUE}Updating and installing feeds...${NC}"
-    ./scripts/feeds update -a
-    ./scripts/feeds install -a
+    # Ask user for recompile mode
+    echo -e "${BLUE}Recompile mode:${NC}"
+    echo "1) Recompile with current configuration (faster)"
+    echo "2) Recompile and update/install feeds (for version change or new feeds)"
+    read -p "Enter your choice [1/2]: " recompile_mode
 
-    # Prompt for custom feeds BEFORE branch/tag selection
-    echo -e "${BLUE}You may now add custom feeds manually if needed.${NC}"
-    read -p "Press Enter to continue after adding feeds..." temp
+    if [[ "$recompile_mode" == "1" ]]; then
+        # Recompile dengan konfigurasi saat ini
+        echo -e "${BLUE}Running '${BOLD}make defconfig${NC}${BLUE}'...${NC}"
+        make defconfig
+        start_build
+    elif [[ "$recompile_mode" == "2" ]]; then
+        # Feeds update and install
+        echo -e "${BLUE}Updating and installing feeds...${NC}"
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
 
-    # Re-run feeds in loop if error
-    while true; do
-        ./scripts/feeds update -a && ./scripts/feeds install -a && break
-        echo -e "${RED}${BOLD}Error:${NC} ${RED}Feeds update/install failed. Please address the issue, then press Enter to retry...${NC}"
-        read -r
-    done
+        # Prompt for custom feeds
+        echo -e "${BLUE}You may now add custom feeds manually if needed.${NC}"
+        read -p "Press Enter to continue after adding feeds..." temp
 
-    # Show branches and tags
-    echo -e "${BLUE}Current branch/tag:${NC}"
-    git branch --show-current
-    echo -e "${BLUE}Available branches:${NC}"
-    git branch -a
-    echo -e "${BLUE}Available tags:${NC}"
-    git tag | sort -V
+        # Re-run feeds in loop if error
+        while true; do
+            ./scripts/feeds update -a && ./scripts/feeds install -a && break
+            echo -e "${RED}${BOLD}Error:${NC} ${RED}Feeds update/install failed. Please address the issue, then press Enter to retry...${NC}"
+            read -r
+        done
 
-    # Select tag or branch
-    while true; do
-        echo -ne "${BLUE}Enter a branch or tag to checkout (leave blank to keep current): ${NC}"
-        read TARGET_TAG
-        if [[ -z "$TARGET_TAG" ]]; then
-            echo -e "${BLUE}Keeping current branch/tag.${NC}"
-            break
-        elif git checkout "$TARGET_TAG"; then
-            break
-        else
-            echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Try again.${NC}"
+        # Show branches and tags
+        echo -e "${BLUE}Current branch/tag:${NC}"
+        git branch --show-current
+        echo -e "${BLUE}Available branches:${NC}"
+        git branch -a
+        echo -e "${BLUE}Available tags:${NC}"
+        git tag | sort -V
+
+        # Select tag or branch
+        while true; do
+            echo -ne "${BLUE}Enter a branch or tag to checkout (leave blank to keep current): ${NC}"
+            read TARGET_TAG
+            if [[ -z "$TARGET_TAG" ]]; then
+                echo -e "${BLUE}Keeping current branch/tag.${NC}"
+                break
+            elif git checkout "$TARGET_TAG"; then
+                break
+            else
+                echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Try again.${NC}"
+            fi
+        done
+
+        # Run make defconfig
+        echo -e "${BLUE}Running '${BOLD}make defconfig${NC}${BLUE}'...${NC}"
+        make defconfig
+
+        # Ask if user wants to open menuconfig
+        read -p "$(echo -e ${BLUE}Do you want to open ${BOLD}menuconfig${NC}${BLUE} to re-select packages? [y/N]: ${NC})" mc
+        if [[ "$mc" == "y" || "$mc" == "Y" ]]; then
+            make menuconfig
         fi
-    done
 
-    # Run make defconfig
-    echo -e "${BLUE}Running '${BOLD}make defconfig${NC}${BLUE}'...${NC}"
-    make defconfig
-
-    # Ask if user wants to open menuconfig (PILIHAN untuk recompile)
-    read -p "$(echo -e ${BLUE}Do you want to open ${BOLD}menuconfig${NC}${BLUE} to re-select packages? [y/N]: ${NC})" mc
-    if [[ "$mc" == "y" || "$mc" == "Y" ]]; then
-        make menuconfig
+        # Start build
+        start_build
+    else
+        echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Exiting recompile.${NC}"
+        cd ..
+        return 1
     fi
-
-    # Start build
-    start_build
 
     cd .. # Go back to the script's original directory
 }
@@ -196,7 +210,7 @@ start_build() {
         echo -e "${BLUE}Running '${BOLD}make defconfig${NC}${BLUE}'...${NC}"
         make defconfig
 
-        # Ask if user wants to open menuconfig (PILIHAN saat error recovery)
+        # Ask if user wants to open menuconfig (saat error recovery)
         read -p "$(echo -e ${BLUE}Do you want to open ${BOLD}menuconfig${NC}${BLUE} to re-select packages? [y/N]: ${NC})" mc_retry
         if [[ "$mc_retry" == "y" || "$mc_retry" == "Y" ]]; then
             make menuconfig
@@ -242,7 +256,7 @@ if [[ ${#existing_dirs[@]} -gt 0 ]]; then
         echo -e "${BLUE}Which distro do you want to recompile?${NC}"
         for i in "${!existing_dirs[@]}"; do
             echo "$((i+1))) ${existing_dirs[$i]}"
-        done
+        end
         read -p "Enter the number of the distro to recompile: " recompile_choice
         if [[ "$recompile_choice" -ge 1 && "$recompile_choice" -le "${#existing_dirs[@]}" ]]; then
             selected_dir="${existing_dirs[$((recompile_choice-1))]}"
@@ -256,7 +270,7 @@ if [[ ${#existing_dirs[@]} -gt 0 ]]; then
         echo -e "${BLUE}Which distro do you want to perform a fresh build on?${NC}"
         for i in "${!existing_dirs[@]}"; do
             echo "$((i+1))) ${existing_dirs[$i]}"
-        done
+        end
         read -p "Enter the number of the distro to fresh build: " fresh_build_choice
         if [[ "$fresh_build_choice" -ge 1 && "$fresh_build_choice" -le "${#existing_dirs[@]}" ]]; then
             selected_dir="${existing_dirs[$((fresh_build_choice-1))]}"
@@ -277,4 +291,4 @@ else
     fresh_build
 fi
 
-echo -e "${
+echo -e "${NC}Script finished.${NC}"
