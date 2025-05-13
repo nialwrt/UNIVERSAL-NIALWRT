@@ -125,7 +125,7 @@ recompile() {
     # Enter the distro directory
     cd "$distro_dir"
 
-    # Feeds update and install
+    # Feeds update and install (initial)
     echo -e "${BLUE}Updating and installing feeds...${NC}"
     ./scripts/feeds update -a
     ./scripts/feeds install -a
@@ -133,6 +133,14 @@ recompile() {
     # Prompt for custom feeds BEFORE branch/tag selection
     echo -e "${BLUE}You may now add custom feeds manually if needed.${NC}"
     read -p "Press Enter to continue after adding feeds..." temp
+
+    # Re-run feeds update and install AFTER user input
+    echo -e "${BLUE}Updating and installing feeds again...${NC}"
+    while true; do
+        ./scripts/feeds update -a && ./scripts/feeds install -a && break
+        echo -e "${RED}${BOLD}Error:${NC} ${RED}Feeds update/install failed. Please address the issue, then press Enter to retry...${NC}"
+        read -r
+    done
 
     # Show branches and tags
     echo -e "${BLUE}Current branch/tag:${NC}"
@@ -252,22 +260,4 @@ if [[ ${#existing_dirs[@]} -gt 0 ]]; then
         done
         read -p "Enter the number of the distro to fresh build: " fresh_build_choice
         if [[ "$fresh_build_choice" -ge 1 && "$fresh_build_choice" -le "${#existing_dirs[@]}" ]]; then
-            selected_dir="${existing_dirs[$((fresh_build_choice-1))]}"
-            echo -e "${BLUE}Performing fresh build for ${BOLD}${selected_dir}${NC}${BLUE}...${NC}"
-            # Hapus hanya direktori yang dipilih sebelum memanggil fresh_build
-            [ -d "$selected_dir" ] && echo -e "${BLUE}Removing existing '${selected_dir}' directory...${NC}" && rm -rf "$selected_dir"
-            fresh_build # Fungsi fresh_build akan menangani pemilihan distro lagi
-        else
-            echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Exiting.${NC}"
-            exit 1
-        fi
-    else
-        echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Exiting.${NC}"
-        exit 1
-    fi
-else
-    echo -e "${BLUE}No existing firmware directories found. Starting a fresh build.${NC}"
-    fresh_build
-fi
-
-echo -e "${BLUE}Script finished.${NC}"
+            selected_
