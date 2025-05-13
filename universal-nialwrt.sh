@@ -6,159 +6,144 @@ GREEN='\033[1;32m'
 RED='\033[1;31m'
 NC='\033[0m'
 
-# Get script file name
+# Get script name
 script_file="$(basename "$0")"
 
-# Clear the screen and show title
+# Clear screen and print title
 clear
 echo -e "${BLUE}UNIVERSAL-NIALWRT${NC}"
-echo -e "${BLUE}Select the firmware distribution you want to build:${NC}"
+echo -e "${BLUE}Select your desired firmware distribution:${NC}"
 echo "1) OpenWrt"
 echo "2) OpenWrt-IPQ"
 echo "3) ImmortalWrt"
-read -p "Enter your choice [1/2/3]: " choice
+read -p "Enter choice [1/2/3]: " choice
 
-# Define repository and dependencies based on choice
+# Set repo and dependencies
 if [[ "$choice" == "1" ]]; then
     distro="openwrt"
     repo="https://github.com/openwrt/openwrt.git"
-    deps="build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext \
-git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget"
+    deps="build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget"
 elif [[ "$choice" == "2" ]]; then
     distro="openwrt-ipq"
     repo="https://github.com/qosmio/openwrt-ipq.git"
-    deps="build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext \
-git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget"
+    deps="build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget"
 elif [[ "$choice" == "3" ]]; then
     distro="immortalwrt"
     repo="https://github.com/immortalwrt/immortalwrt.git"
-    deps="ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
-bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext \
-gcc-multilib g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 \
-libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev \
-libncurses-dev libpython3-dev libreadline-dev libssl-dev libtool libyaml-dev libz-dev \
-lld llvm lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python3 \
-python3-pip python3-ply python3-docutils python3-pyelftools qemu-utils re2c rsync \
-scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto \
-xxd zlib1g-dev zstd"
+    deps="ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd"
 else
-    echo -e "${RED}Invalid choice. Exiting.${NC}"
+    echo -e "${RED}Invalid selection. Exiting.${NC}"
     exit 1
 fi
 
-# Optional: cleanup mode
+# Cleanup mode
 if [[ "$1" == "--clean" ]]; then
-    echo -e "${BLUE}Cleaning up directories and this script...${NC}"
+    echo -e "${BLUE}Cleaning up...${NC}"
     [ -d "$distro" ] && echo -e "${BLUE}Removing '${distro}' directory...${NC}" && rm -rf "$distro"
-    [ -f "$script_file" ] && echo -e "${BLUE}Removing script file '${script_file}'...${NC}" && rm -f "$script_file"
+    [ -f "$script_file" ] && echo -e "${BLUE}Removing script '${script_file}'...${NC}" && rm -f "$script_file"
     exit 0
 fi
 
-# Install required packages
-echo -e "${BLUE}Installing required build dependencies...${NC}"
+# Install build dependencies
+echo -e "${BLUE}Installing required packages...${NC}"
 sudo apt update -y
 sudo apt install -y $deps
 
-# Remove old directory if it exists
-[ -d "$distro" ] && echo -e "${BLUE}Removing existing '${distro}' directory...${NC}" && rm -rf "$distro"
+# Remove old directory if exists
+[ -d "$distro" ] && echo -e "${BLUE}Removing previous '${distro}' directory...${NC}" && rm -rf "$distro"
 
-# Clone the selected repository
-echo -e "${BLUE}Cloning repository from GitHub...${NC}"
+# Clone selected repo
+echo -e "${BLUE}Cloning repository...${NC}"
 git clone $repo $distro
 
-# Enter the build directory
+# Enter source directory
 cd $distro
 
-# Update and install feeds
-echo -e "${BLUE}Initializing package feeds...${NC}"
+# Initial feeds setup
+echo -e "${BLUE}Setting up feeds...${NC}"
 ./scripts/feeds update -a && ./scripts/feeds install -a
 
-# Pause for adding custom feeds
-echo -e "${BLUE}You may now add custom feeds if needed.${NC}"
-read -p "Press [Enter] to continue..." temp
+# Prompt for custom feeds
+echo -e "${BLUE}You may now add custom feeds manually if needed.${NC}"
+read -p "Press Enter to continue..." temp
 
-#!/bin/bash
-
-# Update feeds
-while ! ./scripts/feeds update -a; do
-    echo -e "${RED}Feeds update failed. Please fix any issues in 'feeds.conf.default' and press Enter to retry...${NC}"
+# Re-run feeds in loop if error
+while true; do
+    ./scripts/feeds update -a && ./scripts/feeds install -a && break
+    echo -e "${RED}Feeds update/install failed. Please fix the issue, then press Enter to retry...${NC}"
     read -r
 done
 
-# Install feeds
-while ! ./scripts/feeds install -a; do
-    echo -e "${RED}Feeds install failed. Please fix any issues and press Enter to retry...${NC}"
-    read -r
-done
-
-echo "Feeds update and install completed successfully."
-
-# Show available branches and tags
+# Show branches and tags
 echo -e "${BLUE}Available branches:${NC}"
 git branch -a
 echo -e "${BLUE}Available tags:${NC}"
 git tag | sort -V
 
-# Prompt user to checkout branch or tag
+# Select tag or branch
 while true; do
     echo -ne "${BLUE}Enter a branch or tag to checkout: ${NC}"
     read TARGET_TAG
     if git checkout $TARGET_TAG; then
         break
     else
-        echo -e "${RED}Invalid branch/tag. Please try again.${NC}"
+        echo -e "${RED}Invalid selection. Try again.${NC}"
     fi
 done
 
-# If openwrt-ipq, apply config
+# Apply seed config if needed
 if [[ "$choice" == "2" ]]; then
-    echo -e "${BLUE}Applying preseeded .config for OpenWrt-IPQ...${NC}"
+    echo -e "${BLUE}Applying pre-seeded .config...${NC}"
     cp nss-setup/config-nss.seed .config
-fi
-
-# Only for openwrt-ipq, run make defconfig on first compile
-if [[ "$choice" == "2" ]]; then
-    echo -e "${BLUE}Running 'make defconfig' for OpenWrt-IPQ...${NC}"
+    echo -e "${BLUE}Running 'make defconfig'...${NC}"
     make defconfig
 fi
 
-# Launch the build config menu
-echo -e "${BLUE}Opening configuration menu...${NC}"
+# Open menuconfig
+echo -e "${BLUE}Opening menuconfig...${NC}"
 make menuconfig
 
-# Recompile loop until success
+# Build loop
 while true; do
-    echo -e "${BLUE}Starting the build process...${NC}"
+    echo -e "${BLUE}Starting build...${NC}"
     start_time=$(date +%s)
+
     if make -j"$(nproc)"; then
         echo -e "${GREEN}Build completed successfully.${NC}"
         break
     else
-        echo -e "${RED}Build failed. Retrying with detailed output...${NC}"
+        echo -e "${RED}Build failed. Retrying with verbose output...${NC}"
         make -j1 V=s
-        echo -e "${RED}Error encountered. Please fix the issue and press Enter to continue...${NC}"
+
+        echo -e "${RED}Please fix the error, then press Enter to continue...${NC}"
         read -r
 
-        # Retry feeds update/install if there's an issue
-        while ! ./scripts/feeds update -a && ./scripts/feeds install -a; do
-            echo -e "${RED}Feeds update and install failed. Please fix any issues in 'feeds.conf.default' and press Enter to retry...${NC}"
+        # Feeds recovery
+        while true; do
+            ./scripts/feeds update -a && ./scripts/feeds install -a && break
+            echo -e "${RED}Feeds update/install failed. Please fix and press Enter...${NC}"
             read -r
         done
 
-        # Run make defconfig for all distros after fix
-        echo -e "${BLUE}Running 'make defconfig' to initialize clean configuration after failure...${NC}"
+        echo -e "${BLUE}Running 'make defconfig'...${NC}"
         make defconfig
+
+        # Ask if user wants to open menuconfig
+        read -p "$(echo -e ${BLUE}Do you want to open menuconfig again? [y/N]: ${NC})" mc
+        if [[ "$mc" == "y" || "$mc" == "Y" ]]; then
+            make menuconfig
+        fi
     fi
+
+    # Duration
     end_time=$(date +%s)
     duration=$((end_time - start_time))
     hours=$((duration / 3600))
     minutes=$(((duration % 3600) / 60))
-    echo -e "${BLUE}Build attempt duration: ${hours} hour(s) and ${minutes} minute(s).${NC}"
-    echo -e "${RED}You may fix the issue, then press Enter to retry build...${NC}"
-    read -r
+    echo -e "${BLUE}Build duration: ${hours} hour(s) and ${minutes} minute(s).${NC}"
 done
 
-# Clean up script
+# Final cleanup
 cd ..
-echo -e "${BLUE}Cleaning up this script file '${script_file}'...${NC}"
+echo -e "${BLUE}Removing this script '${script_file}'...${NC}"
 rm -f "$script_file"
