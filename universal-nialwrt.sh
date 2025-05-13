@@ -148,7 +148,7 @@ recompile() {
             ./scripts/feeds update -a && ./scripts/feeds install -a && break
             echo -e "${RED}${BOLD}Error:${NC} ${RED}Feeds update/install failed. Please address the issue, then press Enter to retry...${NC}"
             read -r
-        done
+        fi
 
         # Show branches and tags
         echo -e "${BLUE}Current branch/tag:${NC}"
@@ -248,25 +248,11 @@ if [[ -d "immortalwrt" ]]; then existing_dirs+=("immortalwrt"); fi
 if [[ ${#existing_dirs[@]} -gt 0 ]]; then
     echo -e "${BLUE}Found existing firmware directories:${NC}"
     echo "What do you want to do?"
-    echo "1) Recompile"
-    echo "2) Fresh build"
+    echo "1) Fresh build"
+    echo "2) Rebuild"
     read -p "Enter your choice [1/2]: " build_choice
 
     if [[ "$build_choice" == "1" ]]; then
-        echo -e "${BLUE}Which distro do you want to recompile?${NC}"
-        for i in "${!existing_dirs[@]}"; do
-            echo "$((i+1))) ${existing_dirs[$i]}"
-        end
-        read -p "Enter the number of the distro to recompile: " recompile_choice
-        if [[ "$recompile_choice" -ge 1 && "$recompile_choice" -le "${#existing_dirs[@]}" ]]; then
-            selected_dir="${existing_dirs[$((recompile_choice-1))]}"
-            echo -e "${BLUE}Recompiling ${BOLD}${selected_dir}${NC}${BLUE}...${NC}"
-            recompile "$selected_dir"
-        else
-            echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Exiting.${NC}"
-            exit 1
-        fi
-    elif [[ "$build_choice" == "2" ]]; then
         echo -e "${BLUE}Which distro do you want to perform a fresh build on?${NC}"
         for i in "${!existing_dirs[@]}"; do
             echo "$((i+1))) ${existing_dirs[$i]}"
@@ -277,7 +263,21 @@ if [[ ${#existing_dirs[@]} -gt 0 ]]; then
             echo -e "${BLUE}Performing fresh build for ${BOLD}${selected_dir}${NC}${BLUE}...${NC}"
             # Hapus hanya direktori yang dipilih sebelum memanggil fresh_build
             [ -d "$selected_dir" ] && echo -e "${BLUE}Removing existing '${selected_dir}' directory...${NC}" && rm -rf "$selected_dir"
-            fresh_build # Fungsi fresh_build akan menangani pemilihan distro lagi
+            fresh_build # Fungsi fresh_build melakukan proses clone repo dll
+        else
+            echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Exiting.${NC}"
+            exit 1
+        fi
+    elif [[ "$build_choice" == "2" ]]; then
+        echo -e "${BLUE}Which distro do you want to rebuild?${NC}"
+        for i in "${!existing_dirs[@]}"; do
+            echo "$((i+1))) ${existing_dirs[$i]}"
+        end
+        read -p "Enter the number of the distro to rebuild: " recompile_choice # Menggunakan variabel yang berbeda untuk kejelasan
+        if [[ "$recompile_choice" -ge 1 && "$recompile_choice" -le "${#existing_dirs[@]}" ]]; then
+            selected_dir="${existing_dirs[$((recompile_choice-1))]}"
+            echo -e "${BLUE}Recompiling ${BOLD}${selected_dir}${NC}${BLUE}...${NC}"
+            recompile "$selected_dir" # Memanggil fungsi recompile karena rebuild di sini maksudnya adalah recompile dengan opsi untuk update feeds/branch
         else
             echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Exiting.${NC}"
             exit 1
