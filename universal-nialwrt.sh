@@ -150,7 +150,7 @@ recompile() {
         else
             echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Try again.${NC}"
         fi
-    }
+    done
 
     # Run make defconfig
     echo -e "${BLUE}Running '${BOLD}make defconfig${NC}${BLUE}'...${NC}"
