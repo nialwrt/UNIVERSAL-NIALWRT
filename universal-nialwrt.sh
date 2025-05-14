@@ -13,11 +13,11 @@ script_file="$(basename "$0")"
 # Function to display main menu
 main_menu() {
     clear
-    echo -e "\e[${BLUE}34m--------------------------------------\e[${NC}0m"
-    echo -e "\e[${BLUE}34m  ${BOLD}UNIVERSAL-NIALWRT Firmware Build\e[${NC}0m"
-    echo -e "\e[${BLUE}34m  ${BOLD}https://github.com/nialwrt\e[${NC}0m"
-    echo -e "\e[${BLUE}34m  ${BOLD}Telegram: @NIALVPN\e[${NC}0m"
-    echo -e "\e[${BLUE}34m--------------------------------------\e[${NC}0m"
+    echo -e "${BLUE}--------------------------------------${NC}"
+    echo -e "${BLUE}  ${BOLD}UNIVERSAL-NIALWRT Firmware Build${NC}"
+    echo -e "${BLUE}  ${BOLD}https://github.com/nialwrt${NC}"
+    echo -e "${BLUE}  ${BOLD}Telegram: @NIALVPN${NC}"
+    echo -e "${BLUE}--------------------------------------${NC}"
     echo -e "${BLUE}${BOLD}Select firmware distribution:${NC}"
     echo -e "${BOLD}1) ${GREEN}OpenWrt${NC}"
     echo -e "${BOLD}2) ${GREEN}OpenWrt-IPQ${NC}"
