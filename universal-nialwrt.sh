@@ -162,10 +162,13 @@ rebuild_menu() {
 
         case "$rebuild_choice" in
             1)
+                log_info "Cleaning with 'make distclean'..."
+                make distclean || { log_error "make distclean failed."; break; }
+
                 log_info "Updating Package & Firmware..."
                 update_feeds || { log_error "Feeds update failed."; break; }
+
                 git checkout
-                rm -f .config
                 make menuconfig
                 make -j"$(nproc)"
                 break ;;
