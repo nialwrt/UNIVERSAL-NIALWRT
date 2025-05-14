@@ -13,36 +13,37 @@ script_file="$(basename "$0")"
 # Function to display main menu
 main_menu() {
     clear
-    echo -e "\e[34m--------------------------------------\e[0m"
-    echo -e "\e[34m  UNIVERSAL-NIALWRT Firmware Build\e[0m"
-    echo -e "\e[34m  https://github.com/nialwrt\e[0m"
-    echo -e "\e[34m  Telegram: @NIALVPN\e[0m"
-    echo -e "\e[34m--------------------------------------\e[0m"
-    echo -e "${BLUE}Select firmware distribution:${NC}"
-    echo "1) OpenWrt"
-    echo "2) OpenWrt-IPQ"
-    echo "3) ImmortalWrt"
-    read -p "Enter choice [1/2/3]: " choice
+    echo -e "\e[${BLUE}34m--------------------------------------\e[${NC}0m"
+    echo -e "\e[${BLUE}34m  ${BOLD}UNIVERSAL-NIALWRT Firmware Build\e[${NC}0m"
+    echo -e "\e[${BLUE}34m  ${BOLD}https://github.com/nialwrt\e[${NC}0m"
+    echo -e "\e[${BLUE}34m  ${BOLD}Telegram: @NIALVPN\e[${NC}0m"
+    echo -e "\e[${BLUE}34m--------------------------------------\e[${NC}0m"
+    echo -e "${BLUE}${BOLD}Select firmware distribution:${NC}"
+    echo "${BOLD}1) ${GREEN}OpenWrt${NC}"
+    echo "${BOLD}2) ${GREEN}OpenWrt-IPQ${NC}"
+    echo "${BOLD}3) ${GREEN}ImmortalWrt${NC}"
+    read -p "${BOLD}Enter choice [1/2/3]: ${NC}" choice
 
     case "$choice" in
         1) distro="openwrt"; repo="https://github.com/openwrt/openwrt.git"; deps="build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget";;
         2) distro="openwrt-ipq"; repo="https://github.com/qosmio/openwrt-ipq.git"; deps="build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget";;
         3) distro="immortalwrt"; repo="https://github.com/immortalwrt/immortalwrt.git"; deps="ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd";;
-        *) echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Exiting.${NC}"; exit 1 ;;
+        *) echo -e "${RED}${BOLD}Error:${NC} ${RED}${BOLD}Invalid selection. Exiting.${NC}"; exit 1 ;;
     esac
 }
 
 # Function to handle fresh build
 fresh_build() {
     echo -e "${BLUE}${BOLD}Starting fresh build for ${distro}...${NC}"
-    [ -d "$distro" ] && echo -e "${BLUE}Removing existing '${distro}' directory...${NC}" && rm -rf "$distro"
-    echo -e "${BLUE}Cloning repository...${NC}"
+    [ -d "$distro" ] && echo -e "${BLUE}${BOLD}Removing existing '${distro}' directory...${NC}" && rm -rf "$distro"
+    echo -e "${BLUE}${BOLD}Cloning repository...${NC}"
     git clone "$repo" "$distro"
     cd "$distro"
     setup_feeds
     select_target
     apply_seed_config
-    run_menuconfig
+    echo -e "${BLUE}${BOLD}Opening ${BOLD}menuconfig${NC}${BLUE}...${NC}"
+    make menuconfig
     start_build
 }
 
@@ -51,15 +52,15 @@ rebuild_menu() {
     echo -e "${BLUE}${BOLD}Rebuilding ${distro}...${NC}"
     cd "$distro"
     while true; do
-        echo -e "${BLUE}Select rebuild option:${NC}"
-        echo -e "1) Quick Rebuild: Use existing config"
-        echo -e "2) Update pkgs/fw: Get latest (may take a while)"
-        read -p "Enter choice [1/2]: " rebuild_choice
+        echo -e "${BLUE}${BOLD}Select rebuild option:${NC}"
+        echo -e "${BOLD}1) ${GREEN}Quick Rebuild${NC}${BOLD}: Use existing config${NC}"
+        echo -e "${BOLD}2) ${GREEN}Update pkgs/fw${NC}${BOLD}: Get latest (may take a while)${NC}"
+        read -p "${BOLD}Enter choice [1/2]: ${NC}" rebuild_choice
 
         case "$rebuild_choice" in
-            1) echo -e "${BLUE}Using existing configuration...${NC}"; make defconfig; start_build ;;
+            1) echo -e "${BLUE}${BOLD}Using existing configuration...${NC}"; make defconfig; start_build ;;
             2) update_feeds; select_target; apply_seed_config; run_menuconfig; start_build ;;
-            *) echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Try again.${NC}" ;;
+            *) echo -e "${RED}${BOLD}Error:${NC} ${RED}${BOLD}Invalid selection. Try again.${NC}" ;;
         esac
         [[ "$rebuild_choice" == "1" || "$rebuild_choice" == "2" ]] && break
     done
@@ -67,30 +68,30 @@ rebuild_menu() {
 
 # Function to setup feeds
 setup_feeds() {
-    echo -e "${BLUE}Setting up feeds...${NC}"
+    echo -e "${BLUE}${BOLD}Setting up feeds...${NC}"
     ./scripts/feeds update -a && ./scripts/feeds install -a
     while true; do
-        echo -e "${BLUE}You may now add custom feeds manually if needed.${NC}"
-        read -p "Press Enter to continue..." temp
+        echo -e "${BLUE}${BOLD}You may now add custom feeds manually if needed.${NC}"
+        read -p "${BOLD}Press Enter to continue...${NC}" temp
         ./scripts/feeds update -a && ./scripts/feeds install -a && break
-        echo -e "${RED}${BOLD}Error:${NC} ${RED}Feeds update/install failed. Please address the issue, then press Enter to retry...${NC}"
+        echo -e "${RED}${BOLD}Error:${NC} ${RED}${BOLD}Feeds update/install failed. Please address the issue, then press Enter to retry...${NC}"
         read -r
     done
 }
 
 # Function to select target branch or tag
 select_target() {
-    echo -e "${BLUE}Available branches:${NC}"
+    echo -e "${BLUE}${BOLD}Available branches:${NC}"
     git branch -a
-    echo -e "${BLUE}Available tags:${NC}"
+    echo -e "${BLUE}${BOLD}Available tags:${NC}"
     git tag | sort -V
     while true; do
-        echo -ne "${BLUE}Enter a branch or tag to checkout: ${NC}"
+        echo -ne "${BLUE}${BOLD}Enter a branch or tag to checkout: ${NC}"
         read TARGET_TAG
         if git checkout "$TARGET_TAG"; then
             break
         else
-            echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Try again.${NC}"
+            echo -e "${RED}${BOLD}Error:${NC} ${RED}${BOLD}Invalid selection. Try again.${NC}"
         fi
     done
 }
@@ -98,31 +99,31 @@ select_target() {
 # Function to apply seed config (for OpenWrt-IPQ)
 apply_seed_config() {
     if [[ "$distro" == "openwrt-ipq" ]]; then
-        echo -e "${BLUE}Applying pre-seeded .config...${NC}"
+        echo -e "${BLUE}${BOLD}Applying pre-seeded .config...${NC}"
         cp nss-setup/config-nss.seed .config
-        echo -e "${BLUE}Running '${BOLD}make defconfig${NC}${BLUE}'...${NC}"
+        echo -e "${BLUE}${BOLD}Running '${BOLD}make defconfig${NC}${BLUE}'...${NC}"
         make defconfig
     fi
 }
 
-# Function to run menuconfig
+# Function to run menuconfig (with prompt)
 run_menuconfig() {
-    read -p "$(echo -e ${BLUE}Do you want to open ${BOLD}menuconfig${NC}${BLUE}? [y/N]: ${NC})" mc
+    read -p "$(echo -e ${BLUE}${BOLD}Do you want to open ${BOLD}menuconfig${NC}${BLUE}? [${GREEN}y${NC}/${RED}N${NC}]: ${NC})" mc
     if [[ "$mc" == "y" || "$mc" == "Y" ]]; then
-        echo -e "${BLUE}Opening ${BOLD}menuconfig${NC}${BLUE}...${NC}"
+        echo -e "${BLUE}${BOLD}Opening ${BOLD}menuconfig${NC}${BLUE}...${NC}"
         make menuconfig
     fi
 }
 
 # Function to update feeds
 update_feeds() {
-    echo -e "${BLUE}Updating and installing feeds...${NC}"
+    echo -e "${BLUE}${BOLD}Updating and installing feeds...${NC}"
     ./scripts/feeds update -a && ./scripts/feeds install -a
     while true; do
-        echo -e "${BLUE}You may now add custom feeds manually if needed.${NC}"
-        read -p "Press Enter to continue..." temp
+        echo -e "${BLUE}${BOLD}You may now add custom feeds manually if needed.${NC}"
+        read -p "${BOLD}Press Enter to continue...${NC}" temp
         ./scripts/feeds update -a && ./scripts/feeds install -a && break
-        echo -e "${RED}${BOLD}Error:${NC} ${RED}Feeds update/install failed. Please address the issue, then press Enter to retry...${NC}"
+        echo -e "${RED}${BOLD}Error:${NC} ${RED}${BOLD}Feeds update/install failed. Please address the issue, then press Enter to retry...${NC}"
         read -r
     done
 }
@@ -130,7 +131,7 @@ update_feeds() {
 # Function to handle the build process with error recovery
 start_build() {
     while true; do
-        echo -e "${BLUE}Starting build...${NC}"
+        echo -e "${BLUE}${BOLD}Starting build...${NC}"
         start_time=$(date +%s)
 
         if make -j"$(nproc)"; then
@@ -139,24 +140,24 @@ start_build() {
             duration=$((end_time - start_time))
             hours=$((duration / 3600))
             minutes=$(((duration % 3600) / 60))
-            echo -e "${BLUE}Build duration: ${BOLD}${hours} hour(s)${NC}${BLUE} and ${BOLD}${minutes} minute(s)${NC}${BLUE}.${NC}"
+            echo -e "${BLUE}${BOLD}Build duration: ${BOLD}${hours}${NC}${BLUE} hour(s) and ${BOLD}${minutes}${NC}${BLUE} minute(s).${NC}"
             break
         else
-            echo -e "${RED}${BOLD}Error:${NC} ${RED}Build failed. Retrying with verbose output...${NC}"
+            echo -e "${RED}${BOLD}Error:${NC} ${RED}${BOLD}Build failed. Retrying with verbose output...${NC}"
             make -j1 V=s
 
-            read -p "${RED}Please fix the error, then press Enter to continue...${NC}"
+            read -p "${RED}${BOLD}Please fix the error, then press Enter to continue...${NC}"
 
             # Feeds recovery loop
             while true; do
                 ./scripts/feeds update -a && ./scripts/feeds install -a && break
-                echo -e "${RED}${BOLD}Error:${NC} ${RED}Feeds update/install failed. Please fix and press Enter...${NC}"
+                echo -e "${RED}${BOLD}Error:${NC} ${RED}${BOLD}Feeds update/install failed. Please fix and press Enter...${NC}"
                 read -r
             done
 
-            echo -e "${BLUE}Running '${BOLD}make defconfig${NC}${BLUE}'...${NC}"
+            echo -e "${BLUE}${BOLD}Running '${BOLD}make defconfig${NC}${BLUE}'...${NC}"
             make defconfig
-            run_menuconfig # Offer menuconfig again after error
+            # run_menuconfig # Jangan tawarkan menuconfig lagi setelah error di fresh build
         fi
     done
 }
@@ -164,10 +165,8 @@ start_build() {
 # Cleanup mode
 if [[ "$1" == "--clean" ]]; then
     echo -e "${BLUE}${BOLD}Cleaning up...${NC}"
-    # We don't know the distro here, so we can't specifically remove it.
-    # User should manually remove the distro folder if needed in clean mode.
-    echo -e "${BLUE}Please manually remove the distro folder if you want to clean it.${NC}"
-    [ -f "$script_file" ] && echo -e "${BLUE}Removing script '${script_file}'...${NC}" && rm -f "$script_file"
+    echo -e "${BLUE}${BOLD}Please manually remove the distro folder if you want to clean it.${NC}"
+    [ -f "$script_file" ] && echo -e "${BLUE}${BOLD}Removing script '${script_file}'...${NC}" && rm -f "$script_file"
     exit 0
 fi
 
@@ -176,27 +175,26 @@ main_menu # Get distro choice and set variables
 
 if [ -d "$distro" ]; then
     while true; do
-        echo -e "${BLUE}Distro folder '${distro}' found.${NC}"
-        echo "1) Fresh Build (delete existing)"
-        echo "2) Rebuild"
-        read -p "Enter choice [1/2]: " build_type
+        echo -e "${BLUE}${BOLD}Distro folder '${distro}' found.${NC}"
+        echo "${BOLD}1) ${GREEN}Fresh Build${NC}${BOLD} (delete existing and configure)${NC}"
+        echo "${BOLD}2) ${GREEN}Rebuild${NC}${BOLD} (use existing configuration)${NC}"
+        read -p "${BOLD}Enter choice [1/2]: ${NC}" build_type
 
         case "$build_type" in
             1) fresh_build; break ;;
             2) rebuild_menu; break ;;
-            *) echo -e "${RED}${BOLD}Error:${NC} ${RED}Invalid selection. Try again.${NC}" ;;
+            *) echo -e "${RED}${BOLD}Error:${NC} ${RED}${BOLD}Invalid selection. Try again.${NC}" ;;
         esac
     done
 else
     # Install build dependencies only for a fresh build
-    echo -e "${BLUE}Installing required packages...${NC}"
+    echo -e "${BLUE}${BOLD}Installing required packages...${NC}"
     sudo apt update -y
     sudo apt install -y "$deps"
     fresh_build
 fi
 
-# Final cleanup (moved outside the conditional)
+# Final cleanup
 cd ..
-echo -e "${BLUE}Removing this script '${script_file}'...${NC}"
+echo -e "${BLUE}${BOLD}Removing this script '${script_file}'...${NC}"
 rm -f "$script_file"
-
