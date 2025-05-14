@@ -43,7 +43,7 @@ main_menu() {
     clear
     echo -e "${MAGENTA}${BOLD}--------------------------------------${NC}"
     echo -e "${MAGENTA}${BOLD}  UNIVERSAL-NIALWRT Firmware Build  ${NC}"
-    echo -e "${MAGENTA}  https://github.com/nialwrt              ${NC}"
+    echo -e "${MAGENTA}  https://github.com/nialwrt      ${NC}"
     echo -e "${MAGENTA}  Telegram: @NIALVPN                     ${NC}"
     echo -e "${MAGENTA}${BOLD}--------------------------------------${NC}"
     echo -e "${BLUE}${BOLD}Select firmware distribution:${NC}"
@@ -89,13 +89,25 @@ rebuild_menu() {
     cd "$distro"
     while true; do
         echo -e "${BLUE}${BOLD}Select rebuild option:${NC}"
-        echo -e "1) Quick Rebuild: Use existing config"
-        echo -e "2) Update pkgs/fw: Get latest (may take a while)"
-        read -p "Enter choice [1/2]: " rebuild_choice
+        echo -e "1) Update Firmware Version"
+        echo -e "2) Update Package"
+        echo -e "3) Update Preset"
+        read -p "Enter choice [1/2/3]: " rebuild_choice
 
         case "$rebuild_choice" in
-            1) log_info "Using existing configuration for quick rebuild."; make defconfig; run_menuconfig; start_build; break ;;
-            2) log_info "Updating feeds and rebuilding."; update_feeds; select_target; apply_seed_config; run_menuconfig; start_build; break ;;
+            1) log_info "Updating Firmware Version.";
+               git checkout; make -j $(nproc); break ;;
+            2) log_info "Updating Package.";
+               ./scripts/feeds update -a && ./scripts/feeds install -a;
+               log_info "Please use 'make menuconfig' to review and update package selections.";
+               make menuconfig; # Force user to review packages
+               make defconfig;  # Ensure config is up-to-date
+               make -j $(nproc);
+               break ;;
+            3) log_info "Updating Preset.";
+               # Add logic here to "stop enter to input preset"
+               read -p "Press Enter to apply preset (or Ctrl+C to skip)..."
+               make -j $(nproc); break ;;
             *) log_error "Invalid selection: $rebuild_choice. Try again." ;;
         esac
     done
