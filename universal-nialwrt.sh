@@ -230,7 +230,6 @@ if [[ "$1" == "--clean" ]]; then
     log_step "Cleaning up..."
     echo -e "${BLUE}${BOLD}Cleaning up...${NC}"
     echo -e "${BLUE}Please manually remove the distro folder if you want to clean it.${NC}"
-    [ -f "$script_file" ] && log_info "Removing script '$script_file'..." && rm -f "$script_file"
     log_success "Cleanup process finished."
     exit 0
 fi
@@ -268,8 +267,5 @@ fi
 cd ..
 log_info "Removing this script '$script_file'..."
 rm -f "$script_file"
-
-sudo apt update && sudo apt install -y
-log_info "Final apt update and upgrade completed."
 
 log_success "Script execution finished."
