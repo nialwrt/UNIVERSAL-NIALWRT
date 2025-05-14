@@ -193,6 +193,14 @@ else
     # Install build dependencies only for a fresh build
     echo -e "${BLUE}Updating package lists...${NC}"
     sudo apt update -y --allow-downgrades
+    echo -e "${BLUE}Attempting to fix any broken dependencies...${NC}"
+    sudo apt --fix-broken install -y
+
+    if [[ "$distro" == "immortalwrt" ]]; then
+        echo -e "${BLUE}Running full system upgrade for ImmortalWrt...${NC}"
+        sudo apt full-upgrade -y
+    fi
+
     echo -e "${BLUE}Installing required packages...${NC}"
     sudo apt install -y "$deps" || {
         echo -e "${RED}${BOLD}Error:${NC} ${RED}Failed to install dependencies.  Please check your system and try again.${NC}"
