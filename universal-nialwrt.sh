@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Define color codes
+# Color codes
 BLUE='\033[1;34m'
 GREEN='\033[1;32m'
 RED='\033[1;31m'
@@ -10,17 +10,17 @@ MAGENTA='\033[1;35m'
 NC='\033[0m'
 BOLD='\033[1m'
 
-# Get script name
+# Get script file
 script_file="$(readlink -f "$0")"
 
 # Logging functions
-log_info() { local msg="$1"; echo -e "${CYAN}>> ${NC}$msg"; }
-log_warning() { local msg="$1"; echo -e "${YELLOW}${BOLD}>> Warning:${NC} ${YELLOW}$msg${NC}"; }
-log_error() { local msg="$1"; echo -e "${RED}${BOLD}>> ERROR:${NC} ${RED}${BOLD}$msg${NC}"; }
-log_success() { local msg="$1"; echo -e "${GREEN}${BOLD}>> SUCCESS:${NC} ${GREEN}${BOLD}$msg${NC}"; }
-log_step() { local msg="$1"; echo -e "${BLUE}${BOLD}>> STEP:${NC} ${BLUE}${BOLD}$msg${NC}"; }
+log_info() { echo -e "${CYAN}>> ${NC}$1"; }
+log_warning() { echo -e "${YELLOW}${BOLD}>> Warning:${NC} ${YELLOW}$1${NC}"; }
+log_error() { echo -e "${RED}${BOLD}>> ERROR:${NC} ${RED}${BOLD}$1${NC}"; }
+log_success() { echo -e "${GREEN}${BOLD}>> SUCCESS:${NC} ${GREEN}${BOLD}$1${NC}"; }
+log_step() { echo -e "${BLUE}${BOLD}>> STEP:${NC} ${BLUE}${BOLD}$1${NC}"; }
 
-# Main menu function
+# Main menu
 main_menu() {
     clear
     echo -e "${MAGENTA}${BOLD}--------------------------------------${NC}"
@@ -46,7 +46,86 @@ main_menu() {
     log_info "Selected distribution: $distro"
 }
 
-# Fresh build process
+# Update feeds
+update_feeds() {
+    log_step "Updating feeds (initial)..."
+
+    ./scripts/feeds update -a && ./scripts/feeds install -a || {
+        log_error "Initial feeds update failed."
+        return 1
+    }
+
+    echo -e "${BLUE}You may now add or edit custom feeds (e.g. feeds.conf.default).${NC}"
+    echo -ne "Press Enter to continue and re-run feeds update... "
+    read
+
+    log_step "Re-running feeds update to apply changes..."
+    ./scripts/feeds update -a && ./scripts/feeds install -a || {
+        log_error "Feeds update failed after manual edit."
+        return 1
+    }
+
+    log_success "Feeds are ready."
+    return 0
+}
+
+# Select branch/tag
+select_target() {
+    log_step "Selecting target branch or tag..."
+
+    log_info "Available branches:"
+    git branch -a | while read -r branch; do log_info "  $branch"; done
+
+    log_info "Available tags:"
+    git tag | sort -V | while read -r tag; do log_info "  $tag"; done
+
+    while true; do
+        echo -ne "${BLUE}Enter a branch or tag to checkout:${NC} "
+        read target_tag
+        git checkout "$target_tag" && { log_success "Checked out to: $target_tag"; break; }
+        log_error "Invalid selection: $target_tag. Try again."
+    done
+}
+
+# Apply seed config
+apply_seed_config() {
+    [[ "$distro" == "openwrt-ipq" ]] || return
+    log_step "Applying preset configuration..."
+    cp nss-setup/config-nss.seed .config
+    make defconfig
+    run_menuconfig
+    log_success "Preset applied."
+}
+
+# Run menuconfig
+run_menuconfig() {
+    log_step "Launching 'make menuconfig'..."
+    make menuconfig && log_success "Configuration done." || log_error "menuconfig encountered issues."
+}
+
+# Start build
+start_build() {
+    log_step "Starting build..."
+    while true; do
+        local start_time=$(date +%s)
+        make -j"$(nproc)" && {
+            local end_time=$(date +%s)
+            local duration=$((end_time - start_time))
+            log_success "Build successful. Duration: $((duration / 3600))h $(((duration % 3600) / 60))m $((duration % 60))s."
+            break
+        }
+
+        log_error "Build failed. Retrying with verbose output..."
+        make -j1 V=s
+        echo -ne "${RED}Fix error, then press Enter to retry...${NC} "
+        read
+        update_feeds
+        make defconfig
+        run_menuconfig
+    done
+}
+
+# Fresh build
 fresh_build() {
     log_step "Starting fresh build for $distro..."
 
@@ -60,13 +139,11 @@ fresh_build() {
     log_success "Repository cloned."
 
     pushd "$distro" > /dev/null || return 1
-
     update_feeds || return 1
     select_target
     apply_seed_config
     run_menuconfig
     start_build
-
     popd > /dev/null
     return 0
 }
@@ -91,111 +168,19 @@ rebuild_menu() {
                 rm -f .config
                 make menuconfig
                 make -j"$(nproc)"
-                break
-                ;;
+                break ;;
             2)
                 log_info "Rebuilding with current preset..."
                 make -j"$(nproc)"
-                break
-                ;;
-            *)
-                log_error "Invalid selection. Enter 1 or 2." ;;
+                break ;;
+            *) log_error "Invalid selection. Enter 1 or 2." ;;
         esac
     done
 
     popd > /dev/null
 }
 
-# Update feeds function
-update_feeds() {
-    log_step "Updating feeds..."
-
-    ./scripts/feeds update -a && ./scripts/feeds install -a || {
-        log_error "Initial feeds update failed. Trying again manually..."
-
-        while true; do
-            echo -e "${BLUE}You may now add/edit custom feeds.${NC}"
-            echo -ne "Press Enter to retry feeds update... "
-            read
-            ./scripts/feeds update -a && ./scripts/feeds install -a && {
-                log_success "Feeds updated successfully."
-                break
-            }
-            log_error "Feeds update still failed. Fix issues and retry."
-        done
-    }
-
-    log_success "Feeds are ready."
-    return 0
-}
-
-# Select branch/tag
-select_target() {
-    log_step "Selecting target branch or tag..."
-
-    log_info "Available branches:"
-    git branch -a | while read -r branch; do log_info "  $branch"; done
-
-    log_info "Available tags:"
-    git tag | sort -V | while read -r tag; do log_info "  $tag"; done
-
-    while true; do
-        echo -ne "${BLUE}Enter a branch or tag to checkout:${NC} "
-        read target_tag
-
-        log_info "Attempting to checkout: $target_tag"
-        git checkout "$target_tag" && {
-            log_success "Checked out to: $target_tag"
-            break
-        }
-
-        log_error "Invalid selection: $target_tag. Try again."
-    done
-}
-
-# Apply .config for openwrt-ipq
-apply_seed_config() {
-    [[ "$distro" == "openwrt-ipq" ]] || return
-
-    log_step "Applying preset configuration..."
-    cp nss-setup/config-nss.seed .config
-    make defconfig
-    run_menuconfig
-    log_success "Preset applied."
-}
-
-# Run menuconfig
-run_menuconfig() {
-    log_step "Launching 'make menuconfig'..."
-    make menuconfig && log_success "Configuration done." || log_error "menuconfig encountered issues."
-}
-
-# Build with error recovery
-start_build() {
-    log_step "Starting build..."
-
-    while true; do
-        local start_time=$(date +%s)
-
-        make -j"$(nproc)" && {
-            local end_time=$(date +%s)
-            local duration=$((end_time - start_time))
-            log_success "Build successful. Duration: $((duration / 3600))h $(((duration % 3600) / 60))m $((duration % 60))s."
-            break
-        }
-
-        log_error "Build failed. Retrying with verbose output..."
-        make -j1 V=s
-
-        echo -ne "${RED}Fix error, then press Enter to retry...${NC} "
-        read
-        update_feeds
-        make defconfig
-        run_menuconfig
-    done
-}
-
-# Cleanup script mode
+# Cleanup
 if [[ "$1" == "--clean" ]]; then
     log_step "Cleaning..."
     echo -e "${BLUE}Manual directory cleanup may still be required.${NC}"
