@@ -19,9 +19,9 @@ main_menu() {
     echo -e "\e[${BLUE}34m  ${BOLD}Telegram: @NIALVPN\e[${NC}0m"
     echo -e "\e[${BLUE}34m--------------------------------------\e[${NC}0m"
     echo -e "${BLUE}${BOLD}Select firmware distribution:${NC}"
-    echo "${BOLD}1) ${GREEN}OpenWrt${NC}"
-    echo "${BOLD}2) ${GREEN}OpenWrt-IPQ${NC}"
-    echo "${BOLD}3) ${GREEN}ImmortalWrt${NC}"
+    echo -e "${BOLD}1) ${GREEN}OpenWrt${NC}"
+    echo -e "${BOLD}2) ${GREEN}OpenWrt-IPQ${NC}"
+    echo -e "${BOLD}3) ${GREEN}ImmortalWrt${NC}"
     read -p "${BOLD}Enter choice [1/2/3]: ${NC}" choice
 
     case "$choice" in
@@ -176,8 +176,8 @@ main_menu # Get distro choice and set variables
 if [ -d "$distro" ]; then
     while true; do
         echo -e "${BLUE}${BOLD}Distro folder '${distro}' found.${NC}"
-        echo "${BOLD}1) ${GREEN}Fresh Build${NC}${BOLD} (delete existing and configure)${NC}"
-        echo "${BOLD}2) ${GREEN}Rebuild${NC}${BOLD} (use existing configuration)${NC}"
+        echo -e "${BOLD}1) ${GREEN}Fresh Build${NC}${BOLD} (delete existing and configure)${NC}"
+        echo -e "${BOLD}2) ${GREEN}Rebuild${NC}${BOLD} (use existing configuration)${NC}"
         read -p "${BOLD}Enter choice [1/2]: ${NC}" build_type
 
         case "$build_type" in
