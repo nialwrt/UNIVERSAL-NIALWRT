@@ -154,7 +154,7 @@ select_target() {
 
     while true; do
         local target_tag
-        read -p "${BLUE}Enter a branch or tag to checkout: ${NC}" target_tag
+        read -p "${BLUE}Enter a branch or tag to checkout: ${NC} " target_tag
 
         log_info "Attempting to checkout: $target_tag"
         git checkout "$target_tag"
