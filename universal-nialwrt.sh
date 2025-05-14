@@ -28,7 +28,7 @@ main_menu() {
     echo -e "${MAGENTA}  https://github.com/nialwrt          ${NC}"
     echo -e "${MAGENTA}  Telegram: @NIALVPN                  ${NC}"
     echo -e "${MAGENTA}${BOLD}--------------------------------------${NC}"
-    echo -e "${BLUE}${BOLD}Select firmware distribution:${NC}"
+    echo -e "${BLUE}${BOLD}Build Menu:${NC}"
     echo "1) OpenWrt"
     echo "2) OpenWrt-IPQ"
     echo "3) ImmortalWrt"
@@ -143,9 +143,11 @@ fresh_build() {
 rebuild_menu() {
     log_step "Rebuilding $distro..."
     pushd "$distro" > /dev/null || { log_error "Failed to enter '$distro'."; return 1; }
+    echo -e "${BLUE}${BOLD}Rebuild Options:${NC}"
+    echo "1) Updating Packages & Firmware"
+    echo "2) Rebuilding with current settings"
     while true; do
-        echo -ne "${BLUE}${BOLD}Select rebuild option [1/2]: ${NC}"
-        read rebuild_choice
+        prompt "Select rebuild option [1/2]: " rebuild_choice
         case "$rebuild_choice" in
             1) log_info "Updating Packages & Firmware..."; make distclean; update_feeds; select_target; run_menuconfig; start_build; break ;;
             2) log_info "Rebuilding with current settings..."; make -j"$(nproc)" && { log_success "Rebuild completed."; show_output_location; break; } || { log_error "Rebuild failed. Initiating full recovery..."; update_feeds; make defconfig; run_menuconfig; start_build; break; } ;;
@@ -169,9 +171,12 @@ check_git
 main_menu
 
 if [ -d "$distro" ]; then
+    echo -e "${BLUE}${BOLD}Directory '$distro' exists.${NC}"
+    echo -e "${BLUE}${BOLD}Rebuild Menu:${NC}"
+    echo "1) Fresh build"
+    echo "2) Rebuild"
     while true; do
-        echo -ne "${BLUE}Directory '$distro' exists. Fresh build or rebuild? [1/2]: ${NC}"
-        read build_type
+        prompt "Enter choice [1/2]: " build_type
         case "$build_type" in
             1) fresh_build; break ;;
             2) rebuild_menu; break ;;
@@ -179,6 +184,7 @@ if [ -d "$distro" ]; then
         esac
     done
 else
+
     log_step "Installing required packages..."
     sudo apt update -y > /dev/null 2>&1
     sudo apt install -y "${deps[@]}" > /dev/null 2>&1
