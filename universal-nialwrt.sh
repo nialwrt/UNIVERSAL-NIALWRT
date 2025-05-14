@@ -92,7 +92,6 @@ apply_seed_config() {
     log_step "Applying preset configuration..."
     cp nss-setup/config-nss.seed .config
     make defconfig
-    run_menuconfig
     log_success "Preset applied."
 }
 
