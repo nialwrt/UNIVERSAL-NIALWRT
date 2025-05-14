@@ -190,9 +190,9 @@ if [ -d "$distro" ]; then
 else
     # Install build dependencies only for a fresh build
     echo -e "${BLUE}Updating package lists...${NC}"
-    sudo apt update -y
-    sudo apt install -y "${deps[@]}" > /dev/null 2>&1 # Install all at once and suppress output
-    echo -e "${GREEN}${BOLD}Dependencies installed successfully.${NC}"
+    sudo apt update -y > /dev/null 2>&1
+    sudo apt install -y "${deps[@]}" > /dev/null 2>&1
+    echo -e "${GREEN}${BOLD}Dependencies installed.${NC}"
     fresh_build
 fi
 
