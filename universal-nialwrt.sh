@@ -152,7 +152,7 @@ start_build() {
             # Feeds recovery loop
             while true; do
                 ./scripts/feeds update -a && ./scripts/feeds install -a && break
-                echo -e "${RED}${BOLD}Error:${NC} ${RED}Feeds update/install failed. Please fix and press Enter...${NC}"
+                echo -e "${RED}${BOLD}Error:${NC} ${RED}Feeds update/install failed. Please address the issue, then press Enter to retry...${NC}"
                 read -r
             done
 
@@ -191,9 +191,13 @@ if [ -d "$distro" ]; then
     done
 else
     # Install build dependencies only for a fresh build
+    echo -e "${BLUE}Updating package lists...${NC}"
+    sudo apt update -y --allow-downgrades
     echo -e "${BLUE}Installing required packages...${NC}"
-    sudo apt update -y
-    sudo apt install -y "$deps"
+    sudo apt install -y "$deps" || {
+        echo -e "${RED}${BOLD}Error:${NC} ${RED}Failed to install dependencies.  Please check your system and try again.${NC}"
+        exit 1
+    }
     fresh_build
 fi
 
