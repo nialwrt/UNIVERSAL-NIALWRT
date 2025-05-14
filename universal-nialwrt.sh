@@ -13,7 +13,8 @@ log_step() { echo -e "${BLUE}${BOLD}>> STEP:${NC} ${BLUE}${BOLD}$1${NC}"; }
 
 prompt() {
     echo -ne "$1"
-    read "$2"
+    read -r REPLY
+    eval "$2=\"\$REPLY\""
 }
 
 check_git() { command -v git &>/dev/null || { log_error "Git is required."; exit 1; }; }
