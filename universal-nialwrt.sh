@@ -105,7 +105,7 @@ rebuild_menu() {
         read -p "Enter choice [1/2]: " rebuild_choice
 
         case "$rebuild_choice" in
-            1) log_info "Using existing configuration for quick rebuild."; make defconfig; start_build; break ;;
+            1) log_info "Using existing configuration for quick rebuild."; make defconfig; run_menuconfig; start_build; break ;;
             2) log_info "Updating feeds and rebuilding."; update_feeds; select_target; apply_seed_config; run_menuconfig; start_build; break ;;
             *) log_error "Invalid selection: $rebuild_choice. Try again." ;;
         esac
@@ -161,6 +161,7 @@ apply_seed_config() {
         cp nss-setup/config-nss.seed .config
         log_info "Running 'make defconfig'..."
         make defconfig
+        run_menuconfig
         log_success "Pre-seeded configuration applied."
     fi
 }
@@ -168,14 +169,9 @@ apply_seed_config() {
 # Function to run menuconfig
 run_menuconfig() {
     log_step "Configuring build options (menuconfig)..."
-    read -p "$(echo -e ${BLUE}Do you want to open ${BOLD}menuconfig${NC}${BLUE}? [y/N]: ${NC})" mc
-    if [[ "$mc" == "y" || "$mc" == "Y" ]]; then
-        log_info "Opening menuconfig..."
-        make menuconfig
-        log_success "menuconfig closed."
-    else
-        log_info "Skipping menuconfig."
-    fi
+    log_info "Opening menuconfig..."
+    make menuconfig
+    log_success "menuconfig closed."
 }
 
 # Function to update feeds
