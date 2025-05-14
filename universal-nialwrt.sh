@@ -49,7 +49,6 @@ main_menu() {
 # Update feeds
 update_feeds() {
     log_step "Updating feeds (initial)..."
-
     ./scripts/feeds update -a && ./scripts/feeds install -a || {
         log_error "Initial feeds update failed."
         return 1
@@ -103,6 +102,12 @@ run_menuconfig() {
     make menuconfig && log_success "Configuration done." || log_error "menuconfig encountered issues."
 }
 
+# Show build output location
+show_output_location() {
+    log_info "Firmware output should be located at:"
+    echo -e "${YELLOW}$(pwd)/bin/targets/${NC}"
+}
+
 # Start build
 start_build() {
     log_step "Starting build..."
@@ -112,13 +117,16 @@ start_build() {
             local end_time=$(date +%s)
             local duration=$((end_time - start_time))
             log_success "Build successful. Duration: $((duration / 3600))h $(((duration % 3600) / 60))m $((duration % 60))s."
+            show_output_location
             break
         }
 
         log_error "Build failed. Retrying with verbose output..."
         make -j1 V=s
-        echo -ne "${RED}Fix error, then press Enter to retry...${NC} "
+
+        echo -ne "${RED}Fix the error, then press Enter to retry full cycle...${NC} "
         read
+
         update_feeds
         make defconfig
         run_menuconfig
@@ -174,7 +182,17 @@ rebuild_menu() {
                 break ;;
             2)
                 log_info "Rebuilding with current preset..."
-                make -j"$(nproc)"
+                make -j"$(nproc)" && {
+                    log_success "Build completed."
+                    show_output_location
+                    break
+                }
+
+                log_error "Build failed. Switching to full cycle recovery..."
+                update_feeds
+                make defconfig
+                run_menuconfig
+                start_build
                 break ;;
             *) log_error "Invalid selection. Enter 1 or 2." ;;
         esac
