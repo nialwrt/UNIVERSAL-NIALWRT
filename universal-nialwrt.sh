@@ -89,25 +89,37 @@ rebuild_menu() {
     cd "$distro"
     while true; do
         echo -e "${BLUE}${BOLD}Select rebuild option:${NC}"
-        echo -e "1) Update Firmware Version"
-        echo -e "2) Update Package"
-        echo -e "3) Update Preset"
-        read -p "Enter choice [1/2/3]: " rebuild_choice
+        echo -e "1) Package & Firmware update"
+        echo -e "2) Preset & Setting update"
+        read -p "Enter choice [1/2]: " rebuild_choice
 
         case "$rebuild_choice" in
-            1) log_info "Updating Firmware Version.";
-               git checkout; make -j $(nproc); break ;;
-            2) log_info "Updating Package.";
-               ./scripts/feeds update -a && ./scripts/feeds install -a;
-               log_info "Please use 'make menuconfig' to review and update package selections.";
-               make menuconfig; # Force user to review packages
-               make defconfig;  # Ensure config is up-to-date
+            1) log_info "Updating Package & Firmware...";
+               if ./scripts/feeds update -a && ./scripts/feeds install -a; then
+                   log_success "Feeds updated and installed."
+                   while true; do
+                       echo -e "${BLUE}You may now add custom feeds manually if needed.${NC}"
+                       read -p "Press Enter to continue..." temp
+                       if ./scripts/feeds update -a && ./scripts/feeds install -a; then
+                           log_success "Feeds updated and installed (retry)."
+                           break
+                       else
+                           log_error "Feeds update/install failed (retry). Please address the issue, then press Enter to retry..."
+                           read -r
+                       fi
+                   done
+                   git checkout;
+                   rm -f .config; # Remove .config
+                   make menuconfig;
+                   make -j $(nproc);
+                   break
+               else
+                   log_error "Failed to update and install feeds (initial attempt)."
+               fi
+               ;;
+            2) log_info "Updating Preset & Settings...";
                make -j $(nproc);
                break ;;
-            3) log_info "Updating Preset.";
-               # Add logic here to "stop enter to input preset"
-               read -p "Press Enter to apply preset (or Ctrl+C to skip)..."
-               make -j $(nproc); break ;;
             *) log_error "Invalid selection: $rebuild_choice. Try again." ;;
         esac
     done
