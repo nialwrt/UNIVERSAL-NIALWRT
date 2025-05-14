@@ -107,7 +107,7 @@ start_build() {
         make -j1 V=s
         echo -ne "${RED}Fix errors, then press Enter to retry full process... ${NC}"
         read
-        distclean; update_feeds; run_menuconfig
+        make distclean; update_feeds; run_menuconfig
     done
 }
 
