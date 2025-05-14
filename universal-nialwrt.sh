@@ -12,35 +12,24 @@ NC='\033[0m'       # No Color
 # Get script name
 script_file="$(basename "$0")"
 
-# Define log file in the same directory as the script
-log_file="./build.log"
-
-# Function to log messages
+# Function to log messages (output to terminal only)
 log_info() {
     local message="$1"
-    timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-    echo "[INFO] [$timestamp] $message" >> "$log_file"
     echo -e "${CYAN}>> ${NC}$message" # Cyan for general info
 }
 
 log_warning() {
     local message="$1"
-    timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-    echo "[WARNING] [$timestamp] $message" >> "$log_file"
     echo -e "${YELLOW}${BOLD}>> Warning:${NC} ${YELLOW}$message${NC}" # Bold Yellow for warnings
 }
 
 log_error() {
     local message="$1"
-    timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-    echo "[ERROR] [$timestamp] $message" >> "$log_file"
     echo -e "${RED}${BOLD}>> ERROR:${NC} ${RED}${BOLD}$message${NC}" # Bold Red and BOLD for errors
 }
 
 log_success() {
     local message="$1"
-    timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-    echo "[SUCCESS] [$timestamp] $message" >> "$log_file"
     echo -e "${GREEN}${BOLD}>> SUCCESS:${NC} ${GREEN}${BOLD}$message${NC}" # Bold Green and BOLD for success
 }
 
@@ -234,10 +223,6 @@ start_build() {
             run_menuconfig # Offer menuconfig again after error
         fi
     done
-    if "$build_successful"; then
-        log_info "Deleting log file: $log_file"
-        rm -f "$log_file"
-    fi
 }
 
 # Cleanup mode
