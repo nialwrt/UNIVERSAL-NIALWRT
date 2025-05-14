@@ -173,11 +173,8 @@ rebuild_menu() {
         case "$rebuild_choice" in
             1)
                 log_info "Cleaning build environment..."
-                make distclean || { log_error "'make distclean' failed."; break; }
-
-                log_info "Updating Packages & Firmware..."
-                update_feeds || { log_error "Failed to update feeds."; break; }
-
+                make distclean
+                update_feeds
                 select_target
                 run_menuconfig
                 start_build
