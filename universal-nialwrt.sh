@@ -77,7 +77,7 @@ setup_feeds() {
         ./scripts/feeds update -a && ./scripts/feeds install -a && break
         echo -e "${RED}${BOLD}Error:${NC} ${RED}Feeds update/install failed. Please address the issue, then press Enter to retry...${NC}"
         read -r
-    done
+    endwhile
 }
 
 # Function to select target branch or tag
@@ -141,7 +141,7 @@ start_build() {
             duration=$((end_time - start_time))
             hours=$((duration / 3600))
             minutes=$(((duration % 3600) / 60))
-            echo -e "${BLUE}Build duration: ${BOLD}${hours} hour(s)${NC}${BLUE} and ${BOLD}${minutes} minute(s)${NC}${BLUE}.${NC}"
+            echo -e "${BLUE}Build duration: ${BOLD}${hours} hour(s)${NC${BLUE} and ${BOLD}${minutes} minute(s)${NC}${BLUE}.${NC}"
             break
         else
             echo -e "${RED}${BOLD}Error:${NC} ${RED}Build failed. Retrying with verbose output...${NC}"
@@ -191,21 +191,20 @@ if [ -d "$distro" ]; then
     done
 else
     # Install build dependencies only for a fresh build
-    echo -e "${BLUE}Updating package lists...${NC}"
-    sudo apt update -y --allow-downgrades
-    echo -e "${BLUE}Attempting to fix any broken dependencies...${NC}"
-    sudo apt --fix-broken install -y
-
     if [[ "$distro" == "immortalwrt" ]]; then
-        echo -e "${BLUE}Running full system upgrade for ImmortalWrt...${NC}"
-        sudo apt full-upgrade -y
+        echo -e "${BLUE}Updating package lists...${NC}"; sudo apt update -y;
+        echo -e "${BLUE}Running full system upgrade for ImmortalWrt...${NC}"; sudo apt full-upgrade -y;
+        echo -e "${BLUE}Installing required packages...${NC}"; sudo apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential  bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib  g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev  libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev  libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano  ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils  python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs  upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd || {
+            echo -e "${RED}${BOLD}Error:${NC} ${RED}Failed to install dependencies.  Please check your system and try again.${NC}"
+            exit 1
+        }
+    else
+        echo -e "${BLUE}Updating package lists...${NC}"; sudo apt update;
+        echo -e "${BLUE}Installing required packages...${NC}"; sudo apt install build-essential clang flex bison g++ gawk  gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev  python3-setuptools rsync swig unzip zlib1g-dev file wget || {
+            echo -e "${RED}${BOLD}Error:${NC} ${RED}Failed to install dependencies.  Please check your system and try again.${NC}"
+            exit 1
+        }
     fi
-
-    echo -e "${BLUE}Installing required packages...${NC}"
-    sudo apt install -y "$deps" || {
-        echo -e "${RED}${BOLD}Error:${NC} ${RED}Failed to install dependencies.  Please check your system and try again.${NC}"
-        exit 1
-    }
     fresh_build
 fi
 
