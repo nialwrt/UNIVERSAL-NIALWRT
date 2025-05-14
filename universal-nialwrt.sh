@@ -168,9 +168,9 @@ rebuild_menu() {
                 log_info "Updating Package & Firmware..."
                 update_feeds || { log_error "Feeds update failed."; break; }
 
-                git checkout
-                make menuconfig
-                make -j"$(nproc)"
+                select_target
+                run_menuconfig
+                start_build
                 break ;;
             2)
                 log_info "Rebuilding with current preset..."
