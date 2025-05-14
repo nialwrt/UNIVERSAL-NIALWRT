@@ -20,7 +20,7 @@ log_info() {
     local message="$1"
     timestamp=$(date +"%Y-%m-%d %H:%M:%S")
     echo "[INFO] [$timestamp] $message" >> "$log_file"
-    echo "${CYAN}>> ${NC}$message" # Cyan for general info
+    echo -e "${CYAN}>> ${NC}$message" # Cyan for general info
 }
 
 log_warning() {
