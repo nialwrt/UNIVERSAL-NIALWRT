@@ -42,7 +42,9 @@ fresh_build() {
     setup_feeds
     select_target
     apply_seed_config
-    run_menuconfig
+    # Open menuconfig automatically for fresh builds
+    echo -e "${BLUE}Opening ${BOLD}menuconfig${NC}${BLUE}...${NC}"
+    make menuconfig
     start_build
 }
 
