@@ -139,7 +139,8 @@ main_menu
 
 if [ -d "$distro" ]; then
     while true; do
-        read -rp "${BLUE}Directory '$distro' exists. Fresh build or rebuild? [1/2]: ${NC}" build_type
+echo -ne "${BLUE}Directory '$distro' exists. Fresh build or rebuild? [1/2]: ${NC}"
+read build_type
         case "$build_type" in
             1) fresh_build; break ;;
             2) rebuild_menu; break ;;
