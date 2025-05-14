@@ -1,49 +1,63 @@
 #!/bin/bash
 
-# Define color codes (Ubuntu-like)
-BLUE='\033[0;34m'
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m'
-BOLD='\033[1m'
+# Define more vibrant and alert color codes
+BLUE='\033[1;34m'   # Bold Blue
+GREEN='\033[1;32m'  # Bold Green
+RED='\033[1;31m'    # Bold Red
+YELLOW='\033[1;33m' # Bold Yellow
+CYAN='\033[1;36m'   # Bold Cyan
+MAGENTA='\033[1;35m'# Bold Magenta
+NC='\033[0m'       # No Color
 
 # Get script name
 script_file="$(basename "$0")"
 
-# Define log file
-log_file="build.log"
+# Define log file in the same directory as the script
+log_file="./build.log"
 
 # Function to log messages
 log_info() {
     local message="$1"
     timestamp=$(date +"%Y-%m-%d %H:%M:%S")
     echo "[INFO] [$timestamp] $message" >> "$log_file"
-    echo "$message" # Tampilkan pesan saja di terminal
+    echo "${CYAN}>> ${NC}$message" # Cyan for general info
+}
+
+log_warning() {
+    local message="$1"
+    timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+    echo "[WARNING] [$timestamp] $message" >> "$log_file"
+    echo -e "${YELLOW}${BOLD}>> Warning:${NC} ${YELLOW}$message${NC}" # Bold Yellow for warnings
 }
 
 log_error() {
     local message="$1"
     timestamp=$(date +"%Y-%m-%d %H:%M:%S")
     echo "[ERROR] [$timestamp] $message" >> "$log_file"
-    echo -e "${RED}${BOLD}Error:${NC} ${RED}$message${NC}" # Tampilkan pesan error berwarna di terminal
+    echo -e "${RED}${BOLD}>> ERROR:${NC} ${RED}${BOLD}$message${NC}" # Bold Red and BOLD for errors
 }
 
 log_success() {
     local message="$1"
     timestamp=$(date +"%Y-%m-%d %H:%M:%S")
     echo "[SUCCESS] [$timestamp] $message" >> "$log_file"
-    echo -e "${GREEN}${BOLD}Success:${NC} ${GREEN}$message${NC}" # Tampilkan pesan sukses berwarna di terminal
+    echo -e "${GREEN}${BOLD}>> SUCCESS:${NC} ${GREEN}${BOLD}$message${NC}" # Bold Green and BOLD for success
+}
+
+log_step() {
+    local message="$1"
+    echo -e "${BLUE}${BOLD}>> STEP:${NC} ${BLUE}${BOLD}$message${NC}" # Bold Blue and BOLD for key steps
 }
 
 # Function to display main menu
 main_menu() {
     clear
-    echo -e "\e[34m--------------------------------------\e[0m"
-    echo -e "\e[34m  UNIVERSAL-NIALWRT Firmware Build\e[0m"
-    echo -e "\e[34m  https://github.com/nialwrt\e[0m"
-    echo -e "\e[34m  Telegram: @NIALVPN\e[0m"
-    echo -e "\e[34m--------------------------------------\e[0m"
-    echo -e "${BLUE}Select firmware distribution:${NC}"
+    echo -e "${MAGENTA}${BOLD}--------------------------------------${NC}"
+    echo -e "${MAGENTA}${BOLD}  UNIVERSAL-NIALWRT Firmware Build  ${NC}"
+    echo -e "${MAGENTA}  https://github.com/nialwrt              ${NC}"
+    echo -e "${MAGENTA}  Telegram: @NIALVPN                     ${NC}"
+    echo -e "${MAGENTA}${BOLD}--------------------------------------${NC}"
+    echo -e "${BLUE}${BOLD}Select firmware distribution:${NC}"
     echo "1) OpenWrt"
     echo "2) OpenWrt-IPQ"
     echo "3) ImmortalWrt"
@@ -60,12 +74,12 @@ main_menu() {
 
 # Function to handle fresh build
 fresh_build() {
-    log_info "Starting fresh build for $distro..."
+    log_step "Starting fresh build for $distro..."
     if [ -d "$distro" ]; then
-        log_info "Removing existing '$distro' directory..."
+        log_warning "Removing existing '$distro' directory..."
         rm -rf "$distro"
     fi
-    log_info "Cloning repository from $repo to $distro..."
+    log_step "Cloning repository from $repo to $distro..."
     if git clone "$repo" "$distro"; then
         log_success "Repository cloned successfully."
         cd "$distro"
@@ -82,10 +96,10 @@ fresh_build() {
 
 # Function to handle rebuild menu
 rebuild_menu() {
-    log_info "Rebuilding $distro..."
+    log_step "Rebuilding $distro..."
     cd "$distro"
     while true; do
-        echo -e "${BLUE}Select rebuild option:${NC}"
+        echo -e "${BLUE}${BOLD}Select rebuild option:${NC}"
         echo -e "1) Quick Rebuild: Use existing config"
         echo -e "2) Update pkgs/fw: Get latest (may take a while)"
         read -p "Enter choice [1/2]: " rebuild_choice
@@ -101,7 +115,7 @@ rebuild_menu() {
 
 # Function to setup feeds
 setup_feeds() {
-    log_info "Setting up feeds..."
+    log_step "Setting up feeds..."
     if ./scripts/feeds update -a && ./scripts/feeds install -a; then
         log_success "Feeds updated and installed."
         while true; do
@@ -122,6 +136,7 @@ setup_feeds() {
 
 # Function to select target branch or tag
 select_target() {
+    log_step "Selecting target branch or tag..."
     log_info "Available branches:"
     git branch -a | while read -r branch; do log_info "  $branch"; done
     log_info "Available tags:"
@@ -142,7 +157,7 @@ select_target() {
 # Function to apply seed config (for OpenWrt-IPQ)
 apply_seed_config() {
     if [[ "$distro" == "openwrt-ipq" ]]; then
-        log_info "Applying pre-seeded .config..."
+        log_step "Applying pre-seeded .config..."
         cp nss-setup/config-nss.seed .config
         log_info "Running 'make defconfig'..."
         make defconfig
@@ -152,6 +167,7 @@ apply_seed_config() {
 
 # Function to run menuconfig
 run_menuconfig() {
+    log_step "Configuring build options (menuconfig)..."
     read -p "$(echo -e ${BLUE}Do you want to open ${BOLD}menuconfig${NC}${BLUE}? [y/N]: ${NC})" mc
     if [[ "$mc" == "y" || "$mc" == "Y" ]]; then
         log_info "Opening menuconfig..."
@@ -164,7 +180,7 @@ run_menuconfig() {
 
 # Function to update feeds
 update_feeds() {
-    log_info "Updating and installing feeds..."
+    log_step "Updating and installing feeds..."
     if ./scripts/feeds update -a && ./scripts/feeds install -a; then
         log_success "Feeds updated and installed."
         while true; do
@@ -185,8 +201,10 @@ update_feeds() {
 
 # Function to handle the build process with error recovery
 start_build() {
+    local build_successful=false
+    log_step "Starting the main build process..."
     while true; do
-        log_info "Starting build..."
+        log_info "Running 'make -j$(nproc)'..."
         start_time=$(date +%s)
 
         if make -j"$(nproc)"; then
@@ -195,15 +213,17 @@ start_build() {
             hours=$((duration / 3600))
             minutes=$(((duration % 3600) / 60))
             log_success "Build completed successfully. Duration: ${hours} hour(s) and ${minutes} minute(s)."
+            build_successful=true
             break
         else
-            log_error "Build failed. Retrying with verbose output..."
+            log_error "Build failed. Retrying with verbose output ('make -j1 V=s')..."
             make -j1 V=s
 
             read -p "${RED}Please fix the error, then press Enter to continue...${NC}"
 
             # Feeds recovery loop
             while true; do
+                log_info "Attempting to recover feeds..."
                 if ./scripts/feeds update -a && ./scripts/feeds install -a; then
                     log_success "Feeds updated and installed (after build failure)."
                     break
@@ -218,11 +238,15 @@ start_build() {
             run_menuconfig # Offer menuconfig again after error
         fi
     done
+    if "$build_successful"; then
+        log_info "Deleting log file: $log_file"
+        rm -f "$log_file"
+    fi
 }
 
 # Cleanup mode
 if [[ "$1" == "--clean" ]]; then
-    log_info "Cleaning up..."
+    log_step "Cleaning up..."
     echo -e "${BLUE}${BOLD}Cleaning up...${NC}"
     echo -e "${BLUE}Please manually remove the distro folder if you want to clean it.${NC}"
     [ -f "$script_file" ] && log_info "Removing script '$script_file'..." && rm -f "$script_file"
@@ -248,6 +272,7 @@ if [ -d "$distro" ]; then
     done
 else
     # Install build dependencies only for a fresh build
+    log_step "Installing build dependencies..."
     log_info "Updating package lists..."
     sudo apt update -y > /dev/null 2>&1
     log_info "Attempting to upgrade existing dependencies..."
