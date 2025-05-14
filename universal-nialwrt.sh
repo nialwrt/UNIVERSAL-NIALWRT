@@ -9,8 +9,8 @@ CYAN='\033[1;36m'   # Bold Cyan
 MAGENTA='\033[1;35m'# Bold Magenta
 NC='\033[0m'       # No Color
 
-# Get script name
-script_file="$(basename "$0")"
+# Get script name with full path
+script_file="$(readlink -f "$0")"
 
 # Function to log messages (output to terminal only)
 log_info() {
@@ -230,6 +230,7 @@ if [[ "$1" == "--clean" ]]; then
     log_step "Cleaning up..."
     echo -e "${BLUE}${BOLD}Cleaning up...${NC}"
     echo -e "${BLUE}Please manually remove the distro folder if you want to clean it.${NC}"
+    [ -f "$script_file" ] && log_info "Removing script '$script_file'..." && rm -f "$script_file"
     log_success "Cleanup process finished."
     exit 0
 fi
