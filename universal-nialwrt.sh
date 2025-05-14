@@ -77,10 +77,13 @@ show_output_location() { log_info "Firmware output: ${YELLOW}$(pwd)/bin/targets/
 # Start build
 start_build() {
     log_step "Starting firmware build..."
+    local MAKE_J=$(nproc)
+    log_info "Using make -j${MAKE_J} based on available CPU cores."
     log_info "This may take a while."
+
     while true; do
         local start_time=$(date +%s)
-        make -j"$(nproc)" && {
+        make -j"${MAKE_J}" && {
             local duration=$(( $(date +%s) - start_time ))
             local hours=$((duration / 3600)) minutes=$(((duration % 3600) / 60)) seconds=$((duration % 60))
             log_success "Build successful! Time: ${hours}h ${minutes}m ${seconds}s."
