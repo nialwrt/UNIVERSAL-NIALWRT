@@ -29,42 +29,41 @@ main_menu() {
     echo -e "${MAGENTA}  Telegram: @NIALVPN                  ${NC}"
     echo -e "${MAGENTA}${BOLD}--------------------------------------${NC}"
     echo -e "${BLUE}${BOLD}Select firmware distribution:${NC}"
-    echo "1) OpenWrt"
-    echo "2) OpenWrt-IPQ"
-    echo "3) ImmortalWrt"
+    echo "1) OpenWrt: Popular Linux-based OS for embedded devices"
+    echo "2) OpenWrt-IPQ: Optimized OpenWrt for IPQ platforms"
+    echo "3) ImmortalWrt: OpenWrt fork with extra features/support"
 
     while true; do
         echo -ne "Enter choice [1/2/3]: "
         read choice
         case "$choice" in
-            1) distro="openwrt"; repo="https://github.com/openwrt/openwrt.git"; deps=(build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget); break ;;
-            2) distro="openwrt-ipq"; repo="https://github.com/qosmio/openwrt-ipq.git"; deps=(build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget); break ;;
-            3) distro="immortalwrt"; repo="https://github.com/immortalwrt/immortalwrt.git"; deps=(ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd); break ;;
+            1) distro="openwrt"; repo="https://github.com/openwrt/openwrt.git"; deps=(build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget); log_info "Selected: OpenWrt"; break ;;
+            2) distro="openwrt-ipq"; repo="https://github.com/qosmio/openwrt-ipq.git"; deps=(build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget); log_info "Selected: OpenWrt-IPQ"; break ;;
+            3) distro="immortalwrt"; repo="https://github.com/immortalwrt/immortalwrt.git"; deps=(ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd); log_info "Selected: ImmortalWrt"; break ;;
             *) log_error "Invalid selection. Please enter 1, 2, or 3."; ;;
         esac
     done
-    log_info "Selected distribution: $distro"
 }
 
 # Update feeds
 update_feeds() {
-    log_step "Updating feeds (initial)..."
+    log_step "Updating package lists (feeds) from the internet..."
     ./scripts/feeds update -a && ./scripts/feeds install -a || {
         log_error "Initial feeds update failed."
         return 1
     }
 
-    echo -e "${BLUE}You may now add or edit custom feeds (e.g. feeds.conf.default).${NC}"
-    echo -ne "Press Enter to continue and re-run feeds update... "
+    echo -e "${BLUE}You can now add or edit custom feeds (e.g., feeds.conf.default).${NC}"
+    echo -ne "Press Enter when done to re-run feeds update... "
     read
 
-    log_step "Re-running feeds update to apply changes..."
+    log_step "Applying feed changes..."
     ./scripts/feeds update -a && ./scripts/feeds install -a || {
-        log_error "Feeds update failed after manual edit."
+        log_error "Failed to update feeds after manual edit."
         return 1
     }
 
-    log_success "Feeds are ready."
+    log_success "Package lists (feeds) are ready."
     return 0
 }
 
@@ -89,41 +88,45 @@ select_target() {
 # Apply seed config
 apply_seed_config() {
     [[ "$distro" == "openwrt-ipq" ]] || return
-    log_step "Applying preset configuration..."
+    log_step "Applying initial configuration..."
     cp nss-setup/config-nss.seed .config
     make defconfig
-    log_success "Preset applied."
+    log_success "Initial configuration applied."
 }
 
 # Run menuconfig
 run_menuconfig() {
-    log_step "Launching 'make menuconfig'..."
-    make menuconfig && log_success "Configuration done." || log_error "menuconfig encountered issues."
+    log_step "Launching configuration menu..."
+    make menuconfig && log_success "Configuration saved." || log_error "Configuration menu issues."
 }
 
 # Show build output location
 show_output_location() {
-    log_info "Firmware output should be located at:"
+    log_info "Firmware output will be located at:"
     echo -e "${YELLOW}$(pwd)/bin/targets/${NC}"
 }
 
 # Start build
 start_build() {
-    log_step "Starting build..."
+    log_step "Starting firmware build..."
+    log_info "This process may take a while. Please be patient."
     while true; do
         local start_time=$(date +%s)
         make -j"$(nproc)" && {
             local end_time=$(date +%s)
             local duration=$((end_time - start_time))
-            log_success "Build successful. Duration: $((duration / 3600))h $(((duration % 3600) / 60))m $((duration % 60))s."
+            local hours=$((duration / 3600))
+            local minutes=$(((duration % 3600) / 60))
+            local seconds=$((duration % 60))
+            log_success "Build successful! Time taken: ${hours}h ${minutes}m ${seconds}s."
             show_output_location
             break
         }
 
-        log_error "Build failed. Retrying with verbose output..."
+        log_error "Build failed! Showing verbose output for debugging..."
         make -j1 V=s
 
-        echo -ne "${RED}Fix the error, then press Enter to retry full cycle...${NC} "
+        echo -ne "${RED}An error occurred during the build. Review the output above, fix any issues, and press Enter to retry the full process (update feeds, configure, build):${NC} "
         read
 
         update_feeds
@@ -134,7 +137,7 @@ start_build() {
 
 # Fresh build
 fresh_build() {
-    log_step "Starting fresh build for $distro..."
+    log_step "Starting a clean build for $distro..."
 
     [ -d "$distro" ] && {
         log_warning "Removing existing '$distro' directory..."
@@ -142,7 +145,7 @@ fresh_build() {
     }
 
     log_step "Cloning repository from $repo..."
-    git clone "$repo" "$distro" || { log_error "Failed to clone repo."; return 1; }
+    git clone "$repo" "$distro" || { log_error "Failed to clone repository."; return 1; }
     log_success "Repository cloned."
 
     pushd "$distro" > /dev/null || return 1
@@ -162,32 +165,32 @@ rebuild_menu() {
 
     while true; do
         echo -e "${BLUE}${BOLD}Select rebuild option:${NC}"
-        echo "1) Package & Firmware update"
-        echo "2) Preset & Setting update"
+        echo "1) Update Packages & Firmware"
+        echo "2) Rebuild with Current Configuration"
         echo -ne "Enter choice [1/2]: "
         read rebuild_choice
 
         case "$rebuild_choice" in
             1)
-                log_info "Cleaning with 'make distclean'..."
-                make distclean || { log_error "make distclean failed."; break; }
+                log_info "Cleaning build environment..."
+                make distclean || { log_error "'make distclean' failed."; break; }
 
-                log_info "Updating Package & Firmware..."
-                update_feeds || { log_error "Feeds update failed."; break; }
+                log_info "Updating Packages & Firmware..."
+                update_feeds || { log_error "Failed to update feeds."; break; }
 
                 select_target
                 run_menuconfig
                 start_build
                 break ;;
             2)
-                log_info "Rebuilding with current preset..."
+                log_info "Rebuilding with current settings..."
                 make -j"$(nproc)" && {
-                    log_success "Build completed."
+                    log_success "Rebuild completed."
                     show_output_location
                     break
                 }
 
-                log_error "Build failed. Switching to full cycle recovery..."
+                log_error "Rebuild failed. Initiating full cycle recovery..."
                 update_feeds
                 make defconfig
                 run_menuconfig
@@ -202,7 +205,7 @@ rebuild_menu() {
 
 # Cleanup
 if [[ "$1" == "--clean" ]]; then
-    log_step "Cleaning..."
+    log_step "Cleaning up..."
     echo -e "${BLUE}Manual directory cleanup may still be required.${NC}"
     [ -f "$script_file" ] && rm -f "$script_file" && log_info "Removed script: $script_file"
     log_success "Cleanup completed."
@@ -234,6 +237,6 @@ else
     fresh_build
 fi
 
-log_info "Cleaning up script: $script_file"
+log_info "Script finished. Cleaning up..."
 rm -f "$script_file"
-log_success "Script finished."
+log_success "Cleanup complete."
