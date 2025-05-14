@@ -151,7 +151,7 @@ rebuild_menu() {
             1) make distclean; update_feeds; select_target; run_menuconfig; start_build; break ;;
             2) make -j"$(nproc)" && { log_success "Rebuild success."; show_output_location; break; } || {
                    log_error "Rebuild failed. Full recovery..."
-                   make distclean; update_feeds; select_target; run_menuconfig; start_build; break ;;
+                   make distclean; update_feeds; select_target; run_menuconfig; start_build; break
                } ;;
             *) log_error "Invalid selection."; ;;
         esac
