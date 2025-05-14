@@ -18,21 +18,21 @@ log_info() {
     local message="$1"
     timestamp=$(date +"%Y-%m-%d %H:%M:%S")
     echo "[INFO] [$timestamp] $message" >> "$log_file"
-    echo "[INFO] [$timestamp] $message" # Tampilkan juga di terminal
+    echo "$message" # Tampilkan pesan saja di terminal
 }
 
 log_error() {
     local message="$1"
     timestamp=$(date +"%Y-%m-%d %H:%M:%S")
     echo "[ERROR] [$timestamp] $message" >> "$log_file"
-    echo -e "${RED}${BOLD}Error:${NC} ${RED}$message${NC}" # Tampilkan di terminal dengan warna merah
+    echo -e "${RED}${BOLD}Error:${NC} ${RED}$message${NC}" # Tampilkan pesan error berwarna di terminal
 }
 
 log_success() {
     local message="$1"
     timestamp=$(date +"%Y-%m-%d %H:%M:%S")
     echo "[SUCCESS] [$timestamp] $message" >> "$log_file"
-    echo -e "${GREEN}${BOLD}Success:${NC} ${GREEN}$message${NC}" # Tampilkan di terminal dengan warna hijau
+    echo -e "${GREEN}${BOLD}Success:${NC} ${GREEN}$message${NC}" # Tampilkan pesan sukses berwarna di terminal
 }
 
 # Function to display main menu
