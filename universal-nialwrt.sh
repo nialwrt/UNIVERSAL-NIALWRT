@@ -113,7 +113,7 @@ start_build() {
         log_error "Build failed. Debugging with verbose output..."
         make -j1 V=s
         echo -ne "${RED}Fix errors, then press Enter to retry... ${NC}"; read
-        make distclean; update_feeds; select_target; run_menuconfig; start_build; break ;;
+        make distclean; update_feeds; select_target; run_menuconfig; start_build; break
     done
 }
 
