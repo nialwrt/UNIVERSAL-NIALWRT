@@ -91,10 +91,38 @@ show_output_location() {
 }
 
 generate_readme() {
-    echo "# Build Info: $distro" > ../README-${distro}.md
-    echo "- Source: $repo" >> ../README-${distro}.md
-    echo "- Last Build: $(date)" >> ../README-${distro}.md
-    echo "- Output Path: ./bin/targets/" >> ../README-${distro}.md
+    local build_time="${1:-(unspecified)}"
+    local readme_file="../README-${distro}.md"
+
+    {
+        echo "# UNIVERSAL-NIALWRT Build Firmware"
+        echo
+        echo "**Target Distro:** \`$distro\`"
+        echo "**Source Repository:** $repo"
+        echo
+        echo "**Build Date:** $(date)"
+        echo "**Build Duration:** $build_time"
+        echo
+        echo "**Output Directory:**"
+        echo "\`./bin/targets/\`"
+        echo
+        echo "---"
+        echo
+        echo "### Configuration Info"
+        echo
+        echo "- Menuconfig: UNIVERSAL"
+        echo "- Build Type: $( [[ "$build_time" == "(unspecified)" ]] && echo "Existing Rebuild" || echo "Fresh Build")"
+        echo "- Threads Used: make -j$(nproc)"
+        echo
+        echo "---"
+        echo
+        echo "### Notes"
+        echo
+        echo "Build completed using the UNIVERSAL-NIALWRT Firmware Build."
+        echo "For more details or to contribute, visit: [github.com/nialwrt](https://github.com/nialwrt)"
+    } > "$readme_file"
+
+    log_info "README generated at $readme_file"
 }
 
 start_build() {
