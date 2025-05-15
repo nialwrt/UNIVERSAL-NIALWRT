@@ -11,13 +11,19 @@ log_error() { echo -e "${RED}${BOLD}>> ERROR:${NC} ${RED}${BOLD}$1${NC}"; }
 log_success() { echo -e "${GREEN}${BOLD}>> SUCCESS:${NC} ${GREEN}${BOLD}$1${NC}"; }
 log_step() { echo -e "${BLUE}${BOLD}>> STEP:${NC} ${BLUE}${BOLD}$1${NC}"; }
 
-check_dependencies() {
-    for cmd in git make; do
-        command -v "$cmd" &>/dev/null || {
-            log_error "'$cmd' is required but not installed."
-            exit 1
-        }
-    done
+# Check prompt
+prompt() {
+    echo -ne "$1"
+    read -r REPLY
+    eval "$2=\"\$REPLY\""
+}
+
+# Check git
+check_git() {
+    command -v git &>/dev/null || {
+        log_error "Git is required."
+        exit 1
+    }
 }
 
 script_file="${BASH_SOURCE[0]}"
