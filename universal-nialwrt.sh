@@ -153,10 +153,11 @@ rebuild_menu() {
     pushd "$distro" > /dev/null || exit 1
     echo -e "${BLUE}${BOLD}Rebuild Options:${NC}"
     echo "1) Fresh Rebuild (clean and reconfigure)"
-    echo "2) Existing Rebuild (use current config)"
+    echo "2) Configure and Rebuild (new .config)"
+    echo "3) Existing Rebuild (use current config)"
 
     while true; do
-        prompt "${YELLOW}Select option [1/2]: ${NC}" opt
+        prompt "${YELLOW}Select option [1/2/3]: ${NC}" opt
         case "$opt" in
             1)
                 log_step "Performing fresh rebuild..."
@@ -168,20 +169,29 @@ rebuild_menu() {
                 break
                 ;;
             2)
+                log_step "Configuring and rebuilding (new .config)..."
+                rm -f .config
+                make menuconfig && {
+                    make -j"$(nproc)" && {
+                        log_success "Rebuild success."
+                        show_output_location
+                        break
+                    } || {
+                        log_error "Build failed."
+                    }
+                } || log_error "Configuration failed."
+                break
+                ;;
+            3)
                 log_step "Rebuilding with existing settings..."
                 make -j"$(nproc)" && {
                     log_success "Rebuild success."
                     show_output_location
                     break
                 } || {
-                    log_error "Rebuild failed. Fallback to fresh rebuild..."
-                    make distclean
-                    update_feeds || return 1
-                    select_target
-                    run_menuconfig
-                    start_build
-                    break
+                    log_error "Rebuild failed. Consider a fresh rebuild."
                 }
+                break
                 ;;
             *) log_error "Invalid selection."; ;;
         esac
@@ -192,6 +202,7 @@ rebuild_menu() {
 
 [[ "$1" == "--clean" ]] && {
     log_step "Cleaning up..."
+    rm -rf "$distro" && log_info "Directory '$distro' removed."
     rm -f "$script_file" && log_info "Script removed."
     log_success "Cleanup complete."
     exit 0
