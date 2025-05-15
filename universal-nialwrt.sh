@@ -192,16 +192,7 @@ main_menu
 
 if [ -d "$distro" ]; then
     echo -e "${BLUE}${BOLD}Directory '$distro' exists.${NC}"
-    echo "1) Fresh build"
-    echo "2) Rebuild"
-    while true; do
-        prompt "${YELLOW}Choose [1/2]: ${NC}" build_type
-        case "$build_type" in
-            1) fresh_build; break ;;
-            2) rebuild_menu; break ;;
-            *) log_error "Invalid selection."; ;;
-        esac
-    done
+    rebuild_menu
 else
     log_step "Installing dependencies..."
     if sudo apt update -y > /dev/null 2>&1 && sudo apt install -y "${deps[@]}" > /dev/null 2>&1; then
