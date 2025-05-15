@@ -111,7 +111,6 @@ start_build() {
 
             log_success "Build finished in ${hours}h ${minutes}m ${seconds}s."
             show_output_location
-            generate_readme
             break
         }
 
