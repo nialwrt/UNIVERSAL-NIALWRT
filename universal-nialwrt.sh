@@ -77,7 +77,7 @@ apply_seed_config() {
     [[ "$distro" == "openwrt-ipq" ]] || return
     log_step "Applying seed config..."
     if [[ -f "../nss-setup/config-nss.seed" ]]; then
-        cp ../nss-setup/config-nss.seed .config
+        cp nss-setup/config-nss.seed .config
         make defconfig
         log_success "Seed config applied."
     else
