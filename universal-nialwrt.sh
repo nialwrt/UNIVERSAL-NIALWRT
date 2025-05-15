@@ -90,41 +90,6 @@ show_output_location() {
     log_info "Firmware output: ${YELLOW}$(pwd)/bin/targets/${NC}"
 }
 
-generate_readme() {
-    local build_time="${1:-(unspecified)}"
-    local readme_file="../README-${distro}.md"
-
-    {
-        echo "# UNIVERSAL-NIALWRT Build Firmware"
-        echo
-        echo "**Target Distro:** \`$distro\`"
-        echo "**Source Repository:** $repo"
-        echo
-        echo "**Build Date:** $(date)"
-        echo "**Build Duration:** $build_time"
-        echo
-        echo "**Output Directory:**"
-        echo "\`./bin/targets/\`"
-        echo
-        echo "---"
-        echo
-        echo "### Configuration Info"
-        echo
-        echo "- Menuconfig: UNIVERSAL"
-        echo "- Build Type: $( [[ "$build_time" == "(unspecified)" ]] && echo "Existing Rebuild" || echo "Fresh Build")"
-        echo "- Threads Used: make -j$(nproc)"
-        echo
-        echo "---"
-        echo
-        echo "### Notes"
-        echo
-        echo "Build completed using the UNIVERSAL-NIALWRT Firmware Build."
-        echo "For more details or to contribute, visit: [github.com/nialwrt](https://github.com/nialwrt)"
-    } > "$readme_file"
-
-    log_info "README generated at $readme_file"
-}
-
 start_build() {
     log_step "Building firmware..."
     local MAKE_J=$(nproc)
