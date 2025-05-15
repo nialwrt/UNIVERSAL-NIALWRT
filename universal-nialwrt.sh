@@ -1,5 +1,7 @@
 #!/bin/bash
 
+script_file="${BASH_SOURCE[0]}"
+
 # Color codes
 BLUE='\033[1;34m' GREEN='\033[1;32m' RED='\033[1;31m' YELLOW='\033[1;33m'
 CYAN='\033[1;36m' MAGENTA='\033[1;35m' NC='\033[0m' BOLD='\033[1m'
@@ -25,8 +27,6 @@ check_git() {
         exit 1
     }
 }
-
-script_file="${BASH_SOURCE[0]}"
 
 main_menu() {
     clear
