@@ -101,20 +101,44 @@ start_build() {
     log_step "Building firmware..."
     local MAKE_J=$(nproc)
     log_info "Using make -j${MAKE_J}"
+
     while true; do
         local start_time=$(date +%s)
         make -j"${MAKE_J}" && {
             local duration=$(( $(date +%s) - start_time ))
-            local hours=$((duration / 3600)) minutes=$(((duration % 3600) / 60)) seconds=$((duration % 60))
+            local hours=$((duration / 3600))
+            local minutes=$(((duration % 3600) / 60))
+            local seconds=$((duration % 60))
+
             log_success "Build finished in ${hours}h ${minutes}m ${seconds}s."
             show_output_location
             generate_readme
             break
         }
+
         log_error "Build failed. Debugging with verbose output..."
         make -j1 V=s
-        echo -ne "${RED}Fix errors, then press Enter to retry... ${NC}"; read
-        make distclean; update_feeds; select_target; run_menuconfig; start_build; break
+        echo -ne "${RED}Fix errors, then press Enter to retry... ${NC}"
+        read
+
+        make distclean
+        update_feeds || return 1
+        select_target
+        run_menuconfig
+
+        local retry_start=$(date +%s)
+        make -j"${MAKE_J}" && {
+            local retry_duration=$(( $(date +%s) - retry_start ))
+            local rh=$((retry_duration / 3600))
+            local rm=$(((retry_duration % 3600) / 60))
+            local rs=$((retry_duration % 60))
+
+            log_success "Rebuild (after fallback) finished in ${rh}h ${rm}m ${rs}s."
+            show_output_location
+            generate_readme
+        } || log_error "Build still failed after fallback."
+
+        break
     done
 }
 
