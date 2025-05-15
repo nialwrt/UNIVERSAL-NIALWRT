@@ -143,19 +143,41 @@ fresh_build() {
 rebuild_menu() {
     pushd "$distro" > /dev/null || return 1
     echo -e "${BLUE}${BOLD}Rebuild Options:${NC}"
-    echo "1) Update Packages & Firmware"
-    echo "2) Rebuild with current settings"
+    echo "1) Fresh Rebuild (clean and reconfigure)"
+    echo "2) Existing Rebuild (use current config)"
+
     while true; do
         prompt "${YELLOW}Select option [1/2]: ${NC}" opt
         case "$opt" in
-            1) make distclean; update_feeds; select_target; run_menuconfig; start_build; break ;;
-            2) make -j"$(nproc)" && { log_success "Rebuild success."; show_output_location; break; } || {
-                   log_error "Rebuild failed. Full recovery..."
-                   make distclean; update_feeds; select_target; run_menuconfig; start_build; break
-               } ;;
+            1)
+                log_step "Performing fresh rebuild..."
+                make distclean
+                update_feeds || return 1
+                select_target
+                run_menuconfig
+                start_build
+                break
+                ;;
+            2)
+                log_step "Rebuilding with existing settings..."
+                make -j"$(nproc)" && {
+                    log_success "Rebuild success."
+                    show_output_location
+                    break
+                } || {
+                    log_error "Rebuild failed. Fallback to fresh rebuild..."
+                    make distclean
+                    update_feeds || return 1
+                    select_target
+                    run_menuconfig
+                    start_build
+                    break
+                }
+                ;;
             *) log_error "Invalid selection."; ;;
         esac
     done
+
     popd > /dev/null
 }
 
