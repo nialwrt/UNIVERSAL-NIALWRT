@@ -13,14 +13,12 @@ log_error() { echo -e "${RED}${BOLD}>> ERROR:${NC} ${RED}${BOLD}$1${NC}"; }
 log_success() { echo -e "${GREEN}${BOLD}>> SUCCESS:${NC} ${GREEN}${BOLD}$1${NC}"; }
 log_step() { echo -e "${BLUE}${BOLD}>> STEP:${NC} ${BLUE}${BOLD}$1${NC}"; }
 
-# Prompt function
 prompt() {
     echo -ne "$1"
     read -r REPLY
     eval "$2=\"\$REPLY\""
 }
 
-# Check git presence
 check_git() {
     command -v git &>/dev/null || {
         log_error "Git is required."
@@ -42,30 +40,16 @@ main_menu() {
     while true; do
         prompt "${YELLOW}Enter choice [1/2/3]: ${NC}" choice
         case "$choice" in
-            1)
-                distro="openwrt"
-                repo="https://github.com/openwrt/openwrt.git"
-                deps=(build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget)
-                log_info "Selected: OpenWrt"
-                break
-                ;;
-            2)
-                distro="openwrt-ipq"
-                repo="https://github.com/qosmio/openwrt-ipq.git"
-                deps=(build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget)
-                log_info "Selected: OpenWrt-IPQ"
-                break
-                ;;
-            3)
-                distro="immortalwrt"
-                repo="https://github.com/immortalwrt/immortalwrt.git"
-                deps=(ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd)
-                log_info "Selected: ImmortalWrt"
-                break
-                ;;
-            *)
-                log_error "Invalid selection."
-                ;;
+            1) distro="openwrt"; repo="https://github.com/openwrt/openwrt.git"
+               deps=(build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget)
+               log_info "Selected: OpenWrt"; break ;;
+            2) distro="openwrt-ipq"; repo="https://github.com/qosmio/openwrt-ipq.git"
+               deps=(build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget)
+               log_info "Selected: OpenWrt-IPQ"; break ;;
+            3) distro="immortalwrt"; repo="https://github.com/immortalwrt/immortalwrt.git"
+               deps=(ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd)
+               log_info "Selected: ImmortalWrt"; break ;;
+            *) log_error "Invalid selection."; ;;
         esac
     done
 }
@@ -73,18 +57,15 @@ main_menu() {
 update_feeds() {
     log_step "Updating package lists (feeds)..."
     ./scripts/feeds update -a && ./scripts/feeds install -a || return 1
-    echo -ne "${BLUE}Press Enter after editing custom feeds... ${NC}"
-    read
+    echo -ne "${BLUE}Press Enter after editing custom feeds... ${NC}"; read
     ./scripts/feeds update -a && ./scripts/feeds install -a || return 1
     log_success "Package lists updated."
 }
 
 select_target() {
     log_step "Selecting target branch/tag..."
-    echo -e "${YELLOW}Branches:${NC}"
-    git branch -a
-    echo -e "${YELLOW}Tags:${NC}"
-    git tag | sort -V
+    echo -e "${YELLOW}Branches:${NC}"; git branch -a
+    echo -e "${YELLOW}Tags:${NC}"; git tag | sort -V
     while true; do
         prompt "${BLUE}Enter branch/tag to checkout: ${NC}" target_tag
         git checkout "$target_tag" && { log_success "Checked out to: $target_tag"; break; }
@@ -115,24 +96,21 @@ show_output_location() {
 
 start_build() {
     log_step "Building firmware..."
-    local MAKE_J
-    MAKE_J=$(nproc)
+    local MAKE_J=$(nproc)
     log_info "Using make -j${MAKE_J}"
 
     while true; do
-        local start_time duration hours minutes seconds
-        start_time=$(date +%s)
-
-        if make -j"${MAKE_J}"; then
-            duration=$(( $(date +%s) - start_time ))
-            hours=$((duration / 3600))
-            minutes=$(((duration % 3600) / 60))
-            seconds=$((duration % 60))
+        local start_time=$(date +%s)
+        make -j"${MAKE_J}" && {
+            local duration=$(( $(date +%s) - start_time ))
+            local hours=$((duration / 3600))
+            local minutes=$(((duration % 3600) / 60))
+            local seconds=$((duration % 60))
 
             log_success "Build finished in ${hours}h ${minutes}m ${seconds}s."
             show_output_location
             break
-        fi
+        }
 
         log_error "Build failed. Debugging with verbose output..."
         make -j1 V=s
@@ -144,25 +122,35 @@ start_build() {
         select_target
         run_menuconfig
 
-        start_time=$(date +%s)
-        if make -j"${MAKE_J}"; then
-            duration=$(( $(date +%s) - start_time ))
-            hours=$((duration / 3600))
-            minutes=$(((duration % 3600) / 60))
-            seconds=$((duration % 60))
+        local retry_start=$(date +%s)
+        make -j"${MAKE_J}" && {
+            local retry_duration=$(( $(date +%s) - retry_start ))
+            local rh=$((retry_duration / 3600))
+            local rm=$(((retry_duration % 3600) / 60))
+            local rs=$((retry_duration % 60))
 
-            log_success "Rebuild (after fallback) finished in ${hours}h ${minutes}m ${seconds}s."
+            log_success "Rebuild (after fallback) finished in ${rh}h ${rm}m ${rs}s."
             show_output_location
-        else
-            log_error "Build still failed after fallback."
-        fi
+        } || log_error "Build still failed after fallback."
 
         break
     done
 }
 
+build_menu() {
+    log_step "Starting first-time build..."
+    git clone "$repo" "$distro" || { log_error "Git clone failed."; exit 1; }
+    pushd "$distro" > /dev/null || exit 1
+    update_feeds || exit 1
+    select_target
+    apply_seed_config
+    run_menuconfig
+    start_build
+    popd > /dev/null
+}
+
 rebuild_menu() {
-    pushd "$distro" > /dev/null || return 1
+    pushd "$distro" > /dev/null || exit 1
     echo -e "${BLUE}${BOLD}Rebuild Options:${NC}"
     echo "1) Fresh Rebuild (clean and reconfigure)"
     echo "2) Existing Rebuild (use current config)"
@@ -181,11 +169,11 @@ rebuild_menu() {
                 ;;
             2)
                 log_step "Rebuilding with existing settings..."
-                if make -j"$(nproc)"; then
+                make -j"$(nproc)" && {
                     log_success "Rebuild success."
                     show_output_location
                     break
-                else
+                } || {
                     log_error "Rebuild failed. Fallback to fresh rebuild..."
                     make distclean
                     update_feeds || return 1
@@ -193,11 +181,9 @@ rebuild_menu() {
                     run_menuconfig
                     start_build
                     break
-                fi
+                }
                 ;;
-            *)
-                log_error "Invalid selection."
-                ;;
+            *) log_error "Invalid selection."; ;;
         esac
     done
 
@@ -218,15 +204,14 @@ if [ -d "$distro" ]; then
     echo -e "${BLUE}${BOLD}Directory '$distro' exists.${NC}"
     rebuild_menu
 else
-    log_step "Cloning fresh repo and starting build..."
-    git clone "$repo" "$distro" || { log_error "Git clone failed."; exit 1; }
-    pushd "$distro" > /dev/null || exit 1
-    update_feeds || exit 1
-    select_target
-    apply_seed_config
-    run_menuconfig
-    start_build
-    popd > /dev/null
+    log_step "Installing dependencies..."
+    if sudo apt update -y > /dev/null 2>&1 && sudo apt install -y "${deps[@]}" > /dev/null 2>&1; then
+        log_success "Dependencies installed."
+    else
+        log_error "Failed to install packages."
+        exit 1
+    fi
+    build_menu
 fi
 
 log_info "Script done."
