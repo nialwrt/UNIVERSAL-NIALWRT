@@ -35,18 +35,14 @@ main_menu() {
     echo -e "${MAGENTA}${BOLD}--------------------------------------${NC}"
     echo -e "${BLUE}${BOLD}Build Menu:${NC}"
     echo "1) OpenWrt"
-    echo "2) OpenWrt-IPQ"
-    echo "3) ImmortalWrt"
+    echo "2) ImmortalWrt"
     while true; do
-        prompt "${YELLOW}Enter choice [1/2/3]: ${NC}" choice
+        prompt "${YELLOW}Enter choice [1/2]: ${NC}" choice
         case "$choice" in
             1) distro="openwrt"; repo="https://github.com/openwrt/openwrt.git"
                deps=(build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget)
                log_info "Selected: OpenWrt"; break ;;
-            2) distro="openwrt-ipq"; repo="https://github.com/qosmio/openwrt-ipq.git"
-               deps=(build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget)
-               log_info "Selected: OpenWrt-IPQ"; break ;;
-            3) distro="immortalwrt"; repo="https://github.com/immortalwrt/immortalwrt.git"
+            2) distro="immortalwrt"; repo="https://github.com/immortalwrt/immortalwrt.git"
                deps=(ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd)
                log_info "Selected: ImmortalWrt"; break ;;
             *) log_error "Invalid selection."; ;;
@@ -71,18 +67,6 @@ select_target() {
         git checkout "$target_tag" && { log_success "Checked out to: $target_tag"; break; }
         log_error "Invalid branch/tag."
     done
-}
-
-apply_seed_config() {
-    [[ "$distro" == "openwrt-ipq" ]] || return
-    log_step "Applying seed config..."
-    if [[ -f "../nss-setup/config-nss.seed" ]]; then
-        cp nss-setup/config-nss.seed .config
-        make defconfig
-        log_success "Seed config applied."
-    else
-        log_warning "Seed config not found. Skipping."
-    fi
 }
 
 run_menuconfig() {
@@ -143,7 +127,6 @@ build_menu() {
     pushd "$distro" > /dev/null || exit 1
     update_feeds || exit 1
     select_target
-    apply_seed_config
     run_menuconfig
     start_build
     popd > /dev/null
