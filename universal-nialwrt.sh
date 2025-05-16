@@ -180,6 +180,7 @@ cleanup() {
 if [[ "$1" == "--clean" ]]; then
     cleanup
     exit 0
+fi
 
 check_git
 main_menu
