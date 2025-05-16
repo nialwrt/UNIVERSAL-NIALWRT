@@ -5,14 +5,14 @@
 # UNIVERSAL-NIALWRT Firmware Builder
 
 ## Overview
-UNIVERSAL-NIALWRT is a versatile OpenWrt build script offering support for multiple distributions: OpenWrt, OpenWrt-IPQ, and ImmortalWrt. It aims to provide a streamlined and user-friendly experience for building custom firmware.
+UNIVERSAL-NIALWRT is a versatile OpenWrt build script offering support for multiple distributions: OpenWrt, and ImmortalWrt. It aims to provide a streamlined and user-friendly experience for building custom firmware.
 
 ## Features
-* **Multi-Distribution Support:** Enables building firmware for OpenWrt, OpenWrt-IPQ, and ImmortalWrt.
+* **Multi-Distribution Support:** Enables building firmware for OpenWrt and ImmortalWrt.
 * **Automated Build Process:** Simplifies the entire build from dependency installation to the final firmware image.
-* **Smart Feed Management:** Includes automated handling of package feeds with error recovery.
+* **Smart Feed Management:** Includes automated handling of package feeds.
 * **Branch/Tag Selection:** Supports building from specific branches or tags of the chosen distribution.
-* **Customizable via Menuconfig:** Allows full customization of the build configuration using `make menuconfig`.
+* **Customizable via Menuconfig:** Allows full customization of the build configuration.
 
 ## Requirements
 * Internet connection
