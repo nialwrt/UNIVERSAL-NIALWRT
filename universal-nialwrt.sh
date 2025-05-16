@@ -176,7 +176,6 @@ rebuild_menu() {
 
 [[ "$1" == "--clean" ]] && {
     log_step "Cleaning up..."
-    rm -rf "$distro" && log_info "Directory '$distro' removed."
     rm -f "$script_file" && log_info "Script removed."
     log_success "Cleanup complete."
     exit 0
