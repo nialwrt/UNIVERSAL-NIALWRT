@@ -154,22 +154,13 @@ rebuild_menu() {
             2)
                 log_step "Configuring and rebuilding (new .config)..."
                 rm -f .config
-                make menuconfig && {
-                    make -j"$(nproc)" && {
-                        log_success "Rebuild success."
-                        show_output_location
-                        break
-                    } || {
-                        log_error "Build failed."
-                    }
-                } || log_error "Configuration failed."
+                make menuconfig
+                start_build
                 break
                 ;;
             3)
                 log_step "Rebuilding with existing settings..."
-                make -j"$(nproc)" && {
-                    log_success "Rebuild success."
-                    show_output_location
+                start_build
                     break
                 } || {
                     log_error "Rebuild failed. Consider a fresh rebuild."
