@@ -172,6 +172,15 @@ rebuild_menu() {
     popd > /dev/null
 }
 
+cleanup() {
+    rm -f "$script_file"
+}
+
+# Check for --clean argument
+if [[ "$1" == "--clean" ]]; then
+    cleanup
+    exit 0
+
 check_git
 main_menu
 
@@ -189,4 +198,4 @@ else
     build_menu
 fi
 
-echo -e "${GREEN}Script done.${NC}"
+cleanup
