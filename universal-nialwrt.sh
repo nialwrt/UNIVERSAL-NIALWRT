@@ -188,12 +188,14 @@ rebuild_menu() {
                 break
                 ;;
             2)
+                make clean
                 select_target
                 start_build
                 cleanup
                 break
                 ;;
             3)
+                make clean
                 start_build
                 cleanup
                 break
