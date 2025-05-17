@@ -186,6 +186,7 @@ rebuild_menu() {
                 make clean
                 select_target
                 make defconfig
+                run_menuconfig
                 start_build
                 cleanup
                 break
