@@ -23,13 +23,8 @@ BOLD_CYAN="${BOLD}${CYAN}"
 BOLD_WHITE="${BOLD}${WHITE}"
 NC="${RESET}"
 
-distro=""
-repo=""
-deps=()
-opt=""
-target_tag=""
-
 prompt() {
+    local input
     echo -ne "$1"
     read -r input
     eval "$2=\$input"
