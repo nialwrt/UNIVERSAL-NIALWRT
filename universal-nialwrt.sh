@@ -185,8 +185,8 @@ rebuild_menu() {
             2)
                 make clean
                 select_target
+                cp backup.config .config
                 make defconfig
-                run_menuconfig
                 start_build
                 cleanup
                 break
