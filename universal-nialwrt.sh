@@ -2,50 +2,60 @@
 
 script_path="$(realpath "$0")"
 
-# Color codes
-BLUE='\033[0;34m'
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[0;33m'
-CYAN='\033[0;36m'
-MAGENTA='\033[0;35m'
-NC='\033[0m'
+RESET='\033[0m'
 BOLD='\033[1m'
+BLACK='\033[30m'
+RED='\033[31m'
+GREEN='\033[32m'
+YELLOW='\033[33m'
+BLUE='\033[34m'
+MAGENTA='\033[35m'
+CYAN='\033[36m'
+WHITE='\033[37m'
+
+BOLD_BLACK="${BOLD}${BLACK}"
+BOLD_RED="${BOLD}${RED}"
+BOLD_GREEN="${BOLD}${GREEN}"
+BOLD_YELLOW="${BOLD}${YELLOW}"
+BOLD_BLUE="${BOLD}${BLUE}"
+BOLD_MAGENTA="${BOLD}${MAGENTA}"
+BOLD_CYAN="${BOLD}${CYAN}"
+BOLD_WHITE="${BOLD}${WHITE}"
+NC="${RESET}"
 
 distro=""
 repo=""
 deps=()
-choice=""
-target_tag=""
 opt=""
+target_tag=""
 
 prompt() {
     echo -ne "$1"
-    read -r REPLY
-    eval "$2=\"\$REPLY\""
+    read -r input
+    eval "$2=\$input"
 }
 
 check_git() {
     command -v git &>/dev/null || {
-        echo -e "${RED}${BOLD}ERROR:${NC} ${RED}${BOLD}Git is required.${NC}"
+        echo -e "${BOLD_RED}ERROR:${RESET} Git is required."
         exit 1
     }
 }
 
 main_menu() {
     clear
-    echo -e "${MAGENTA}${BOLD}--------------------------------------${NC}"
-    echo -e "${MAGENTA}${BOLD}  UNIVERSAL-NIALWRT Firmware Build    ${NC}"
-    echo -e "${MAGENTA}${BOLD}  https://github.com/nialwrt          ${NC}"
-    echo -e "${MAGENTA}${BOLD}  Telegram: @NIALVPN                  ${NC}"
-    echo -e "${MAGENTA}${BOLD}--------------------------------------${NC}"
-    echo -e "${BLUE}${BOLD}Build Menu:${NC}"
-    echo -e "1) ${GREEN}ImmortalWrt${NC}"
-    echo -e "2) ${GREEN}OpenWrt${NC}"
-    while true;
-    do
-        prompt "${YELLOW}Enter choice [1/2]: ${NC}" choice
-        case "$choice" in
+    echo -e "${BOLD_MAGENTA}--------------------------------------${RESET}"
+    echo -e "${BOLD_MAGENTA}  UNIVERSAL-NIALWRT FIRMWARE BUILD     ${RESET}"
+    echo -e "${BOLD_MAGENTA}  https://github.com/nialwrt           ${RESET}"
+    echo -e "${BOLD_MAGENTA}  TELEGRAM: @NIALVPN                   ${RESET}"
+    echo -e "${BOLD_MAGENTA}--------------------------------------${RESET}"
+    echo -e "${BOLD_BLUE}BUILD MENU:${RESET}"
+    echo -e "1) ImmortalWrt"
+    echo -e "2) OpenWrt"
+
+    while true; do
+        prompt "${BOLD_BLUE}CHOOSE OPTION: ${RESET}" opt
+        case "$opt" in
             1)
                 distro="immortalwrt"
                 repo="https://github.com/immortalwrt/immortalwrt.git"
@@ -57,183 +67,147 @@ main_menu() {
                     ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils
                     python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs
                     upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd)
-                echo -e "${GREEN}${BOLD}SUCCESS:${NC} ${GREEN}${BOLD}Selected: ImmortalWrt${NC}";
-                break ;;
+                echo -e "${BOLD_GREEN}SUCCESS SELECTED: ImmortalWrt${RESET}"
+                break
+                ;;
             2)
                 distro="openwrt"
                 repo="https://github.com/openwrt/openwrt.git"
                 deps=(build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git
                     libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget)
-                echo -e "${GREEN}${BOLD}SUCCESS:${NC} ${GREEN}${BOLD}Selected: OpenWrt${NC}";
-                break ;;
+                echo -e "${BOLD_GREEN}SUCCESS SELECTED: OpenWrt${RESET}"
+                break
+                ;;
             *)
-                echo -e "${RED}${BOLD}ERROR:${NC} ${RED}${BOLD}Invalid selection.${NC}";
+                echo -e "${BOLD_RED}ERROR: INVALID SELECTION.${RESET}"
                 ;;
         esac
     done
 }
 
 update_feeds() {
-    echo -e "${CYAN}${BOLD}STEP:${NC} ${CYAN}${BOLD}Updating package lists (feeds)...${NC}"
+    echo -e "${BOLD_YELLOW}UPDATING FEEDS...${RESET}"
     ./scripts/feeds update -a && ./scripts/feeds install -a || return 1
-    echo -ne "${BLUE}Press Enter after editing custom feeds... ${NC}";
+    echo -ne "${BOLD_BLUE}EDIT FEEDS IF NEEDED, THEN PRESS ENTER: ${RESET}"
     read
+    echo -e "${BOLD_YELLOW}UPDATING FEEDS...${RESET}"
     ./scripts/feeds update -a && ./scripts/feeds install -a || return 1
-    echo -e "${GREEN}${BOLD}SUCCESS:${NC} ${GREEN}${BOLD}Package lists updated.${NC}"
+    echo -e "${BOLD_GREEN}FEEDS UPDATED.${RESET}"
 }
 
 select_target() {
-    echo -e "${CYAN}${BOLD}STEP:${NC} ${CYAN}${BOLD}Selecting target branch/tag...${NC}"
-    echo -e "${YELLOW}Branches:${NC}";
-    git branch -a
-    echo -e "${YELLOW}Tags:${NC}";
+    echo -e "${BOLD_BLUE}SELECT BRANCH OR TAG:${RESET}"
+    git fetch --all --tags
+    echo -e "${BOLD_BLUE}BRANCHES:${RESET}"
+    git branch -r | sed 's|origin/||' | grep -v 'HEAD' | sort -u
+    echo -e "${BOLD_BLUE}TAGS:${RESET}"
     git tag | sort -V
-    while true;
-    do
-        prompt "${BLUE}Enter branch/tag to checkout: ${NC}" target_tag
-        git checkout "$target_tag" && {
-            echo -e "${GREEN}${BOLD}SUCCESS:${NC} ${GREEN}${BOLD}Checked out to: $target_tag${NC}";
-            break;
-        }
-        echo -e "${RED}${BOLD}ERROR:${NC} ${RED}${BOLD}Invalid branch/tag.${NC}"
+
+    while true; do
+        prompt "${BOLD_BLUE}ENTER BRANCH OR TAG: ${RESET}" target_tag
+        git checkout "$target_tag" &>/dev/null && {
+            echo -e "${BOLD_GREEN}CHECKED OUT TO $target_tag${RESET}"
+            break
+        } || echo -e "${BOLD_RED}INVALID BRANCH/TAG: $target_tag${RESET}"
     done
 }
 
 run_menuconfig() {
-    echo -e "${CYAN}${BOLD}STEP:${NC} ${CYAN}${BOLD}Running menuconfig...${NC}"
-    make menuconfig && echo -e "${GREEN}${BOLD}SUCCESS:${NC} ${GREEN}${BOLD}Configuration saved.${NC}" || echo -e "${RED}${BOLD}ERROR:${NC} ${RED}${BOLD}Configuration failed.${NC}"
-}
-
-show_output_location() {
-    echo -e "${GREEN}${BOLD}SUCCESS:${NC} ${GREEN}${BOLD}Firmware output: ${YELLOW}$(pwd)/bin/targets/${NC}"
+    echo -e "${BOLD_YELLOW}RUNNING MENUCONFIG...${RESET}"
+    make menuconfig && echo -e "${BOLD_GREEN}CONFIGURATION SAVED.${RESET}" || echo -e "${BOLD_RED}MENUCONFIG FAILED.${RESET}"
 }
 
 start_build() {
-    echo -e "${CYAN}${BOLD}STEP:${NC} ${CYAN}${BOLD}Building firmware...${NC}"
-    local MAKE_J=$(nproc)
-    echo -e "${CYAN}Using make -j${MAKE_J}${NC}"
+    while true; do
+        echo -e "${BOLD_YELLOW}BUILDING WITH $(nproc) CORES...${RESET}"
+        local start=$(date +%s)
 
-    while true;
-    do
-        local start_time=$(date +%s)
-        make -j"${MAKE_J}" && {
-            local duration=$(( $(date +%s) - start_time ))
-            local hours=$((duration / 3600))
-            local minutes=$(((duration % 3600) / 60))
-            local seconds=$((duration % 60))
-
-            echo -e "${GREEN}${BOLD}SUCCESS:${NC} ${GREEN}${BOLD}Build finished in ${hours}h ${minutes}m ${seconds}s.${NC}"
-            show_output_location
+        if make -j"$(nproc)"; then
+            local dur=$(( $(date +%s) - start ))
+            printf "${BOLD_GREEN}BUILD COMPLETED IN %02dh %02dm %02ds${RESET}\n" \
+                $((dur / 3600)) $(((dur % 3600) / 60)) $((dur % 60))
+            echo -e "${BOLD_BLUE}OUTPUT: $(pwd)/bin/targets/${RESET}"
             break
-        }
+        else
+            echo -e "${BOLD_RED}BUILD FAILED: DEBUGGING WITH VERBOSE OUTPUT${RESET}"
+            make -j1 V=s
 
-        echo -e "${RED}${BOLD}ERROR:${NC} ${RED}${BOLD}Build failed. Debugging with verbose output...${NC}"
-        make -j1 V=s
-        echo -ne "${RED}Fix errors, then press Enter to retry... ${NC}"
-        read
-
-        make distclean
-        update_feeds || return 1
-        select_target
-        run_menuconfig
-
-        local retry_start=$(date +%s)
-        make -j"${MAKE_J}" && {
-            local retry_duration=$(( $(date +%s) - retry_start ))
-            local rh=$((retry_duration / 3600))
-            local rm=$(((retry_duration % 3600) / 60))
-            local rs=$((retry_duration % 60))
-
-            echo -e "${GREEN}${BOLD}SUCCESS:${NC} ${GREEN}${BOLD}Rebuild (after fallback) finished in ${rh}h ${rm}m ${rs}s.${NC}"
-            show_output_location
-        } || echo -e "${RED}${BOLD}ERROR:${NC} ${RED}${BOLD}Build still failed after fallback.${NC}"
-
-        break
+            echo -ne "${BOLD_RED}PLEASE FIX ERROR AND PRESS ENTER TO RETRY${RESET}"
+            read -r
+            make distclean
+            update_feeds || return 1
+            select_target
+            run_menuconfig
+        fi
     done
 }
 
+cleanup() {
+    echo -e "${BOLD_YELLOW}CLEANING UP...${RESET}"
+    rm -- "$script_path"
+}
+
 build_menu() {
-    echo -e "${CYAN}${BOLD}STEP:${NC} ${CYAN}${BOLD}Starting first-time build...${NC}"
+    echo -e "${BOLD_BLUE}CLONING REPO: $repo...${RESET}"
     git clone "$repo" "$distro" || {
-        echo -e "${RED}${BOLD}ERROR:${NC} ${RED}${BOLD}Git clone failed.${NC}";
-        exit 1;
+        echo -e "${BOLD_RED}GIT CLONE FAILED.${RESET}"
+        exit 1
     }
-    pushd "$distro" > /dev/null || exit 1
+    cd "$distro" || exit 1
     update_feeds || exit 1
     select_target
     run_menuconfig
     start_build
-    popd > /dev/null
+    cleanup
 }
 
 rebuild_menu() {
-    pushd "$distro" > /dev/null || exit 1
-    echo -e "${BLUE}${BOLD}Rebuild Options:${NC}"
-    echo -e "1) Fresh Rebuild (clean and reconfigure)"
-    echo -e "2) Configure and Rebuild (new .config)"
-    echo -e "3) Existing Rebuild (use current config)"
+    clear
+    cd "$distro" || exit 1
 
-    while true;
-    do
-        prompt "${YELLOW}Select option [1/2/3]: ${NC}" opt
+    echo -e "${BOLD_MAGENTA}--------------------------------------${RESET}"
+    echo -e "${BOLD_MAGENTA}  UNIVERSAL-NIALWRT FIRMWARE BUILD     ${RESET}"
+    echo -e "${BOLD_MAGENTA}  https://github.com/nialwrt           ${RESET}"
+    echo -e "${BOLD_MAGENTA}  TELEGRAM: @NIALVPN                   ${RESET}"
+    echo -e "${BOLD_MAGENTA}--------------------------------------${RESET}"
+    echo -e "${BOLD_BLUE}REBUILD MENU:${RESET}"
+    echo -e "1) FIRMWARE & PACKAGE UPDATE (FULL REBUILD)"
+    echo -e "2) FIRMWARE UPDATE (FAST REBUILD)"
+    echo -e "3) EXISTING UPDATE (NO CHANGES)"
+
+    while true; do
+        prompt "${BOLD_BLUE}CHOOSE OPTION: ${RESET}" opt
         case "$opt" in
             1)
-                echo -e "${CYAN}${BOLD}STEP:${NC} ${CYAN}${BOLD}Performing fresh rebuild...${NC}"
                 make distclean
-                update_feeds || return 1
+                update_feeds || exit 1
                 select_target
                 run_menuconfig
                 start_build
+                cleanup
                 break
                 ;;
             2)
-                echo -e "${CYAN}${BOLD}STEP:${NC} ${CYAN${BOLD}Configuring and rebuilding (new .config)...${NC}"
-                rm -f .config
-                make menuconfig
+                select_target
                 start_build
+                cleanup
                 break
                 ;;
             3)
-                echo -e "${CYAN}${BOLD}STEP:${NC} ${CYAN}${BOLD}Rebuilding with existing settings...${NC}"
-                start_build || {
-                    echo -e "${RED}${BOLD}ERROR:${NC} ${RED}${BOLD}Rebuild failed. Consider a fresh rebuild.${NC}"
-                }
+                start_build
+                cleanup
                 break
                 ;;
             *)
-                echo -e "${RED}${BOLD}ERROR:${NC} ${RED}${BOLD}Invalid selection.${NC}"
+                echo -e "${BOLD_RED}INVALID CHOICE. PLEASE ENTER 1, 2, OR 3.${RESET}"
                 ;;
         esac
     done
-
-    popd > /dev/null
 }
-
-cleanup() {
-    rm -f "$script_file"
-}
-
-# Check for --clean argument
-if [[ "$1" == "--clean" ]]; then
-    cleanup
-    exit 0
-fi
 
 check_git
 main_menu
 
-if [ -d "$distro" ]; then
-    echo -e "${BLUE}${BOLD}Directory '$distro' exists.${NC}"
-    rebuild_menu
-else
-    echo -e "${CYAN}${BOLD}STEP:${NC} ${CYAN}${BOLD}Installing dependencies...${NC}"
-    if sudo apt update -y > /dev/null 2>&1 && sudo apt install -y "${deps[@]}" > /dev/null 2>&1; then
-        echo -e "${GREEN}${BOLD}SUCCESS:${NC} ${GREEN}${BOLD}Dependencies installed.${NC}"
-    else
-        echo -e "${RED}${BOLD}ERROR:${NC} ${RED}${BOLD}Failed to install packages.${NC}"
-        exit 1
-    fi
-    build_menu
-fi
-
-cleanup
+echo -e "${BOLD_YELLOW}INSTALLING DEPENDENCIES...${RESET}"
+sudo apt update -y && sudo apt full-upgrade -y
+sudo apt install -y
