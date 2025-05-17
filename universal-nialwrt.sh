@@ -1,8 +1,8 @@
 #!/bin/bash
 
-script_file="${BASH_SOURCE[0]}"
+script_path="$(realpath "$0")"
 
-# Color codes (dari aw1k-nialwrt.sh)
+# Color codes
 BLUE='\033[0;34m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -35,9 +35,9 @@ check_git() {
 main_menu() {
     clear
     echo -e "${MAGENTA}${BOLD}--------------------------------------${NC}"
-    echo -e "${MAGENTA}${BOLD}  UNIVERSAL-NIALWRT Firmware Build  ${NC}"
-    echo -e "${MAGENTA}  https://github.com/nialwrt          ${NC}"
-    echo -e "${MAGENTA}  Telegram: @NIALVPN                  ${NC}"
+    echo -e "${MAGENTA}${BOLD}  UNIVERSAL-NIALWRT Firmware Build    ${NC}"
+    echo -e "${MAGENTA}${BOLD}  https://github.com/nialwrt          ${NC}"
+    echo -e "${MAGENTA}${BOLD}  Telegram: @NIALVPN                  ${NC}"
     echo -e "${MAGENTA}${BOLD}--------------------------------------${NC}"
     echo -e "${BLUE}${BOLD}Build Menu:${NC}"
     echo -e "1) ${GREEN}ImmortalWrt${NC}"
