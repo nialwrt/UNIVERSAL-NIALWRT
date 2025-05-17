@@ -208,6 +208,15 @@ rebuild_menu() {
 check_git
 main_menu
 
-echo -e "${BOLD_YELLOW}INSTALLING DEPENDENCIES...${RESET}"
+echo -e "${BOLD_YELLOW}INSTALLING DEPENDENCIES FOR $distro...${RESET}"
 sudo apt update -y && sudo apt full-upgrade -y
-sudo apt install -y
+sudo apt install -y "${deps[@]}" || {
+    echo -e "${BOLD_RED}FAILED TO INSTALL DEPENDENCIES. PLEASE CHECK YOUR SYSTEM AND TRY AGAIN.${RESET}"
+    exit 1
+}
+
+if [ -d "$distro" ]; then
+    rebuild_menu
+else
+    build_menu
+fi
