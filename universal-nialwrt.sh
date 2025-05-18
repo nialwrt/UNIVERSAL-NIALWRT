@@ -97,10 +97,6 @@ select_target() {
     done
 }
 
-run_menuconfig() {
-    echo -e "${BOLD_YELLOW}RUNNING MENUCONFIG...${RESET}"
-    make menuconfig && echo -e "${BOLD_GREEN}CONFIGURATION SAVED.${RESET}" || echo -e "${BOLD_RED}MENUCONFIG FAILED.${RESET}"
-}
 update_feeds() {
     echo -e "${BOLD_YELLOW}UPDATING FEEDS...${RESET}"
     ./scripts/feeds update -a && ./scripts/feeds install -a || return 1
@@ -109,6 +105,11 @@ update_feeds() {
     echo -e "${BOLD_YELLOW}UPDATING FEEDS...${RESET}"
     ./scripts/feeds update -a && ./scripts/feeds install -a || return 1
     echo -e "${BOLD_GREEN}FEEDS UPDATED.${RESET}"
+
+}
+run_menuconfig() {
+    echo -e "${BOLD_YELLOW}RUNNING MENUCONFIG...${RESET}"
+    make menuconfig && echo -e "${BOLD_GREEN}CONFIGURATION SAVED.${RESET}" || echo -e "${BOLD_RED}MENUCONFIG FAILED.${RESET}"
 }
 
 start_build() {
@@ -149,8 +150,8 @@ build_menu() {
     }
     cd "$distro" || exit 1
     select_target
-    run_menuconfig
     update_feeds || exit 1
+    run_menuconfig
     start_build
     cleanup
 }
@@ -175,16 +176,16 @@ rebuild_menu() {
             1)
                 make distclean
                 select_target
-                run_menuconfig
                 update_feeds || exit 1
+                run_menuconfig
                 start_build
                 cleanup
                 break
                 ;;
             2)
                 make clean
-                select_target
-                rm -f .config 
+                rm -f .config
+                select_target 
                 make defconfig
                 run_menuconfig
                 start_build
