@@ -66,7 +66,6 @@ main_menu() {
 
 rebuild_menu() {
     clear
-    cd "$distro" || exit 1
     echo -e "${BOLD_MAGENTA}--------------------------------------${RESET}"
     echo -e "${BOLD_MAGENTA}  UNIVERSAL-NIALWRT FIRMWARE BUILD     ${RESET}"
     echo -e "${BOLD_MAGENTA}  https://github.com/nialwrt           ${RESET}"
@@ -82,7 +81,9 @@ rebuild_menu() {
         read -r opt
         case "$opt" in
             1)
-                make distclean
+                rm -rf "$distro"
+                git clone --depth=1 https://github.com/immortalwrt/immortalwrt "$distro" || exit 1
+                cd "$distro" || exit 1
                 update_feeds || exit 1
                 select_target
                 run_menuconfig
@@ -90,6 +91,7 @@ rebuild_menu() {
                 break
                 ;;
             2)
+                cd "$distro" || exit 1
                 make clean
                 select_target
                 make defconfig
@@ -97,6 +99,7 @@ rebuild_menu() {
                 break
                 ;;
             3)
+                cd "$distro" || exit 1
                 start_build
                 break
                 ;;
