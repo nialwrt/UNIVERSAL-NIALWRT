@@ -83,15 +83,14 @@ rebuild_menu() {
         case "$opt" in
             1)
                 make distclean
-                select_target
                 update_feeds || exit 1
+                select_target
                 run_menuconfig
                 start_build
                 break
                 ;;
             2)
                 make clean
-                rm -f .config
                 select_target
                 make defconfig
                 run_menuconfig
@@ -110,6 +109,15 @@ rebuild_menu() {
     done
 }
 
+update_feeds() {
+    echo -e "${BOLD_YELLOW}UPDATING FEEDS...${RESET}"
+    ./scripts/feeds update -a && ./scripts/feeds install -a || return 1
+    echo -ne "${BOLD_BLUE}EDIT FEEDS IF NEEDED, THEN PRESS ENTER: ${RESET}"
+    read
+    ./scripts/feeds update -a && ./scripts/feeds install -a || return 1
+    echo -e "${BOLD_GREEN}FEEDS UPDATED.${RESET}"
+}
+
 select_target() {
     git fetch --all --tags
     echo -e "${BOLD_BLUE}BRANCHES:${RESET}"
@@ -125,15 +133,6 @@ select_target() {
             break
         } || echo -e "${BOLD_RED}INVALID BRANCH/TAG: $target_tag${RESET}"
     done
-}
-
-update_feeds() {
-    echo -e "${BOLD_YELLOW}UPDATING FEEDS...${RESET}"
-    ./scripts/feeds update -a && ./scripts/feeds install -a || return 1
-    echo -ne "${BOLD_BLUE}EDIT FEEDS IF NEEDED, THEN PRESS ENTER: ${RESET}"
-    read
-    ./scripts/feeds update -a && ./scripts/feeds install -a || return 1
-    echo -e "${BOLD_GREEN}FEEDS UPDATED.${RESET}"
 }
 
 run_menuconfig() {
@@ -192,8 +191,8 @@ build_menu() {
         exit 1
     }
     cd "$distro" || exit 1
-    select_target
     update_feeds || exit 1
+    select_target
     run_menuconfig
     start_build
 }
