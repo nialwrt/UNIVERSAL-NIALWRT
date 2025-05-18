@@ -81,8 +81,10 @@ rebuild_menu() {
         read -r opt
         case "$opt" in
             1)
+                echo -e "${BOLD_YELLOW}>> REMOVING EXISTING BUILD DIR: $distro${RESET}"
                 rm -rf "$distro"
-                git clone --depth=1 https://github.com/immortalwrt/immortalwrt "$distro" || exit 1
+                echo -e "${BOLD_GREEN}>> CLONING FRESH FROM: $repo${RESET}"
+                git clone --depth=1 "$repo" "$distro" || exit 1
                 cd "$distro" || exit 1
                 update_feeds || exit 1
                 select_target
