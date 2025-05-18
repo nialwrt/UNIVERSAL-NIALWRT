@@ -195,7 +195,6 @@ build_menu() {
     start_build
 }
 
-check_git
 main_menu
 if [ -d "$distro" ]; then
     rebuild_menu
