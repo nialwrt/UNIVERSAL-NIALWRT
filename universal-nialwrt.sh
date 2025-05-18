@@ -56,12 +56,18 @@ main_menu() {
         SUDO="sudo"
     fi
 
-    echo -e "${BOLD_YELLOW}INSTALLING DEPENDENCIES FOR $distro...${RESET}"
-    $SUDO apt update -y && $SUDO apt full-upgrade -y
-    $SUDO apt install -y "${deps[@]}" || {
-        echo -e "${BOLD_RED}FAILED TO INSTALL DEPENDENCIES. PLEASE CHECK YOUR SYSTEM AND TRY AGAIN.${RESET}"
+    echo -e "${BOLD_YELLOW}UPDATING SYSTEM PACKAGES...${RESET}"
+    $SUDO apt update -y && $SUDO apt full-upgrade -y || {
+        echo -e "${BOLD_RED}ERROR: SYSTEM UPDATE FAILED.${RESET}"
         exit 1
     }
+
+    echo -e "${BOLD_YELLOW}INSTALLING DEPENDENCIES FOR ${distro^^}...${RESET}"
+    $SUDO apt install -y "${deps[@]}" || {
+        echo -e "${BOLD_RED}ERROR: FAILED TO INSTALL DEPENDENCIES. PLEASE CHECK YOUR SYSTEM AND TRY AGAIN.${RESET}"
+        exit 1
+    }
+    echo -e "${BOLD_GREEN}DEPENDENCIES INSTALLED SUCCESSFULLY.${RESET}"
 }
 
 rebuild_menu() {
@@ -81,10 +87,13 @@ rebuild_menu() {
         read -r opt
         case "$opt" in
             1)
-                echo -e "${BOLD_YELLOW}>> REMOVING EXISTING BUILD DIR: $distro${RESET}"
+                echo -e "${BOLD_YELLOW}REMOVING EXISTING BUILD DIRECTORY: ${distro}${RESET}"
                 rm -rf "$distro"
-                echo -e "${BOLD_GREEN}>> CLONING FRESH FROM: $repo${RESET}"
-                git clone --depth=1 "$repo" "$distro" || exit 1
+                echo -e "${BOLD_YELLOW}CLONING FRESH FROM REPOSITORY: $repo${RESET}"
+                git clone --depth=1 "$repo" "$distro" || {
+                    echo -e "${BOLD_RED}ERROR: GIT CLONE FAILED.${RESET}"
+                    exit 1
+                }
                 cd "$distro" || exit 1
                 update_feeds || exit 1
                 select_target
@@ -93,6 +102,7 @@ rebuild_menu() {
                 break
                 ;;
             2)
+                echo -e "${BOLD_YELLOW}PERFORMING FAST REBUILD (MAKE CLEAN)...${RESET}"
                 cd "$distro" || exit 1
                 make clean
                 select_target
@@ -101,6 +111,7 @@ rebuild_menu() {
                 break
                 ;;
             3)
+                echo -e "${BOLD_YELLOW}STARTING BUILD WITH EXISTING CONFIGURATION...${RESET}"
                 cd "$distro" || exit 1
                 start_build
                 break
@@ -114,27 +125,38 @@ rebuild_menu() {
 
 update_feeds() {
     echo -e "${BOLD_YELLOW}UPDATING FEEDS...${RESET}"
-    ./scripts/feeds update -a && ./scripts/feeds install -a || return 1
-    echo -ne "${BOLD_BLUE}EDIT FEEDS IF NEEDED, THEN PRESS ENTER: ${RESET}"
+    ./scripts/feeds update -a && ./scripts/feeds install -a || {
+        echo -e "${BOLD_RED}ERROR: FEEDS UPDATE FAILED.${RESET}"
+        return 1
+    }
+    echo -ne "${BOLD_BLUE}EDIT FEEDS IF NEEDED, THEN PRESS ENTER TO CONTINUE: ${RESET}"
     read
-    ./scripts/feeds update -a && ./scripts/feeds install -a || return 1
-    echo -e "${BOLD_GREEN}FEEDS UPDATED.${RESET}"
+    ./scripts/feeds update -a && ./scripts/feeds install -a || {
+        echo -e "${BOLD_RED}ERROR: FEEDS INSTALL FAILED AFTER EDIT.${RESET}"
+        return 1
+    }
+    echo -e "${BOLD_GREEN}FEEDS UPDATED SUCCESSFULLY.${RESET}"
 }
 
 select_target() {
+    echo -e "${BOLD_YELLOW}FETCHING ALL BRANCHES AND TAGS...${RESET}"
     git fetch --all --tags
-    echo -e "${BOLD_BLUE}BRANCHES:${RESET}"
+
+    echo -e "${BOLD_BLUE}AVAILABLE BRANCHES:${RESET}"
     git branch -a
-    echo -e "${BOLD_BLUE}TAGS:${RESET}"
+
+    echo -e "${BOLD_BLUE}AVAILABLE TAGS:${RESET}"
     git tag | sort -V
 
     while true; do
-        echo -ne "${BOLD_BLUE}ENTER BRANCH OR TAG: ${RESET}"
+        echo -ne "${BOLD_BLUE}ENTER BRANCH OR TAG TO CHECKOUT: ${RESET}"
         read -r target_tag
-        git checkout "$target_tag" &>/dev/null && {
-            echo -e "${BOLD_GREEN}CHECKED OUT TO $target_tag${RESET}"
+        if git checkout "$target_tag" &>/dev/null; then
+            echo -e "${BOLD_GREEN}CHECKED OUT TO ${target_tag}${RESET}"
             break
-        } || echo -e "${BOLD_RED}INVALID BRANCH/TAG: $target_tag${RESET}"
+        else
+            echo -e "${BOLD_RED}INVALID BRANCH OR TAG: ${target_tag}${RESET}"
+        fi
     done
 }
 
@@ -155,21 +177,21 @@ get_version() {
 
 start_build() {
     while true; do
-        echo -e "${BOLD_YELLOW}BUILDING WITH $(nproc) CORES...${RESET}"
+        echo -e "${BOLD_YELLOW}STARTING BUILD WITH $(nproc) CORES...${RESET}"
         local start=$(date +%s)
 
         if make -j"$(nproc)"; then
             local dur=$(( $(date +%s) - start ))
             printf "${BOLD_GREEN}BUILD COMPLETED IN %02dh %02dm %02ds${RESET}\n" \
                 $((dur / 3600)) $(((dur % 3600) / 60)) $((dur % 60))
-            echo -e "${BOLD_BLUE}OUTPUT: $(pwd)/bin/targets/${RESET}"
+            echo -e "${BOLD_BLUE}OUTPUT DIRECTORY: $(pwd)/bin/targets/${RESET}"
             get_version
-            echo -e "${BOLD_YELLOW}VERSION: ${version_branch}${version_tag}${RESET}"
+            echo -e "${BOLD_YELLOW}BUILD VERSION: ${version_branch}${version_tag}${RESET}"
             break
         else
-            echo -e "${BOLD_RED}BUILD FAILED: DEBUGGING WITH VERBOSE OUTPUT${RESET}"
+            echo -e "${BOLD_RED}BUILD FAILED. RETRYING WITH VERBOSE OUTPUT...${RESET}"
             make -j1 V=s
-            echo -ne "${BOLD_RED}PLEASE FIX ERROR AND PRESS ENTER TO RETRY${RESET}"
+            echo -ne "${BOLD_RED}PLEASE FIX ERRORS AND PRESS ENTER TO RETRY: ${RESET}"
             read -r
             make distclean
             update_feeds || return 1
@@ -180,14 +202,14 @@ start_build() {
 }
 
 cleanup() {
-    echo -e "${BOLD_YELLOW}CLEANING UP...${RESET}"
+    echo -e "${BOLD_YELLOW}CLEANING UP SCRIPT FILE...${RESET}"
     rm -f -- "$script_path"
 }
 
 build_menu() {
-    echo -e "${BOLD_BLUE}CLONING REPO: $repo...${RESET}"
+    echo -e "${BOLD_YELLOW}CLONING REPOSITORY: $repo ...${RESET}"
     git clone "$repo" "$distro" || {
-        echo -e "${BOLD_RED}GIT CLONE FAILED.${RESET}"
+        echo -e "${BOLD_RED}ERROR: GIT CLONE FAILED.${RESET}"
         exit 1
     }
     cd "$distro" || exit 1
