@@ -29,7 +29,8 @@ main_menu() {
     echo -e "2) OpenWrt"
 
     while true; do
-        prompt "${BOLD_BLUE}CHOOSE OPTION: ${RESET}" opt
+        echo -ne "${BOLD_BLUE}CHOOSE OPTION: ${RESET}"
+        read -r opt
         case "$opt" in
             1)
                 distro="immortalwrt"
@@ -77,7 +78,8 @@ rebuild_menu() {
     echo -e "3) EXISTING UPDATE (NO CHANGES)"
 
     while true; do
-        prompt "${BOLD_BLUE}CHOOSE OPTION: ${RESET}" opt
+        echo -ne "${BOLD_BLUE}CHOOSE OPTION: ${RESET}"
+        read -r opt
         case "$opt" in
             1)
                 make distclean
@@ -116,7 +118,8 @@ select_target() {
     git tag | sort -V
 
     while true; do
-        prompt "${BOLD_BLUE}ENTER BRANCH OR TAG: ${RESET}" target_tag
+        echo -ne "${BOLD_BLUE}ENTER BRANCH OR TAG: ${RESET}"
+        read -r target_tag
         git checkout "$target_tag" &>/dev/null && {
             echo -e "${BOLD_GREEN}CHECKED OUT TO $target_tag${RESET}"
             break
