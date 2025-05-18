@@ -107,10 +107,9 @@ install_deps() {
 }
 
 select_target() {
-    echo -e "${BOLD_BLUE}SELECT BRANCH OR TAG:${RESET}"
     git fetch --all --tags
     echo -e "${BOLD_BLUE}BRANCHES:${RESET}"
-    git branch -r | sed 's|origin/||' | grep -v 'HEAD' | sort -u
+    git branch -a
     echo -e "${BOLD_BLUE}TAGS:${RESET}"
     git tag | sort -V
 
