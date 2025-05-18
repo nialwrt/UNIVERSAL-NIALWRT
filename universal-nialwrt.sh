@@ -17,19 +17,6 @@ BOLD_YELLOW="${BOLD}${YELLOW}"
 BOLD_BLUE="${BOLD}${BLUE}"
 BOLD_MAGENTA="${BOLD}${MAGENTA}"
 
-build_menu() {
-    echo -e "${BOLD_BLUE}CLONING REPO: $repo...${RESET}"
-    git clone "$repo" "$distro" || {
-        echo -e "${BOLD_RED}GIT CLONE FAILED.${RESET}"
-        exit 1
-    }
-    cd "$distro" || exit 1
-    select_target
-    update_feeds || exit 1
-    run_menuconfig
-    start_build
-}
-
 main_menu() {
     clear
     echo -e "${BOLD_MAGENTA}--------------------------------------${RESET}"
