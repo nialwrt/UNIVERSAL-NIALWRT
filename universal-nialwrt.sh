@@ -1,10 +1,7 @@
 #!/bin/bash
 
-set -e
-
 script_path="$(realpath "$0")"
 
-# ANSI Colors
 RESET='\033[0m'
 BOLD='\033[1m'
 RED='\033[31m'
@@ -19,23 +16,6 @@ BOLD_GREEN="${BOLD}${GREEN}"
 BOLD_YELLOW="${BOLD}${YELLOW}"
 BOLD_BLUE="${BOLD}${BLUE}"
 BOLD_MAGENTA="${BOLD}${MAGENTA}"
-RESET="${RESET}"
-
-trap cleanup EXIT
-
-prompt() {
-    local input
-    echo -ne "$1"
-    read -r input
-    eval "$2=\$input"
-}
-
-check_git() {
-    command -v git &>/dev/null || {
-        echo -e "${BOLD_RED}ERROR:${RESET} Git is required."
-        exit 1
-    }
-}
 
 main_menu() {
     clear
@@ -54,11 +34,13 @@ main_menu() {
             1)
                 distro="immortalwrt"
                 repo="https://github.com/immortalwrt/immortalwrt.git"
+                deps=(ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd)
                 break
                 ;;
             2)
                 distro="openwrt"
                 repo="https://github.com/openwrt/openwrt.git"
+                deps=(build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget)
                 break
                 ;;
             *)
@@ -66,20 +48,7 @@ main_menu() {
                 ;;
         esac
     done
-}
 
-define_deps() {
-    case "$distro" in
-        immortalwrt)
-            deps=(ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd)
-            ;;
-        openwrt)
-            deps=(build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget)
-            ;;
-    esac
-}
-
-install_deps() {
     if ! command -v sudo &>/dev/null; then
         SUDO=""
     else
@@ -92,6 +61,51 @@ install_deps() {
         echo -e "${BOLD_RED}FAILED TO INSTALL DEPENDENCIES. PLEASE CHECK YOUR SYSTEM AND TRY AGAIN.${RESET}"
         exit 1
     }
+}
+
+rebuild_menu() {
+    clear
+    cd "$distro" || exit 1
+    echo -e "${BOLD_MAGENTA}--------------------------------------${RESET}"
+    echo -e "${BOLD_MAGENTA}  UNIVERSAL-NIALWRT FIRMWARE BUILD     ${RESET}"
+    echo -e "${BOLD_MAGENTA}  https://github.com/nialwrt           ${RESET}"
+    echo -e "${BOLD_MAGENTA}  TELEGRAM: @NIALVPN                   ${RESET}"
+    echo -e "${BOLD_MAGENTA}--------------------------------------${RESET}"
+    echo -e "${BOLD_BLUE}REBUILD MENU:${RESET}"
+    echo -e "1) FIRMWARE & PACKAGE UPDATE (FULL REBUILD)"
+    echo -e "2) FIRMWARE UPDATE (FAST REBUILD)"
+    echo -e "3) EXISTING UPDATE (NO CHANGES)"
+
+    while true; do
+        prompt "${BOLD_BLUE}CHOOSE OPTION: ${RESET}" opt
+        case "$opt" in
+            1)
+                make distclean
+                select_target
+                update_feeds || exit 1
+                run_menuconfig
+                start_build
+                break
+                ;;
+            2)
+                make clean
+                rm -f .config
+                select_target
+                make defconfig
+                run_menuconfig
+                start_build
+                break
+                ;;
+            3)
+                make clean
+                start_build
+                break
+                ;;
+            *)
+                echo -e "${BOLD_RED}INVALID CHOICE. PLEASE ENTER 1, 2, OR 3.${RESET}"
+                ;;
+        esac
+    done
 }
 
 select_target() {
@@ -181,56 +195,8 @@ build_menu() {
     start_build
 }
 
-rebuild_menu() {
-    clear
-    cd "$distro" || exit 1
-    echo -e "${BOLD_MAGENTA}--------------------------------------${RESET}"
-    echo -e "${BOLD_MAGENTA}  UNIVERSAL-NIALWRT FIRMWARE BUILD     ${RESET}"
-    echo -e "${BOLD_MAGENTA}  https://github.com/nialwrt           ${RESET}"
-    echo -e "${BOLD_MAGENTA}  TELEGRAM: @NIALVPN                   ${RESET}"
-    echo -e "${BOLD_MAGENTA}--------------------------------------${RESET}"
-    echo -e "${BOLD_BLUE}REBUILD MENU:${RESET}"
-    echo -e "1) FIRMWARE & PACKAGE UPDATE (FULL REBUILD)"
-    echo -e "2) FIRMWARE UPDATE (FAST REBUILD)"
-    echo -e "3) EXISTING UPDATE (NO CHANGES)"
-
-    while true; do
-        prompt "${BOLD_BLUE}CHOOSE OPTION: ${RESET}" opt
-        case "$opt" in
-            1)
-                make distclean
-                select_target
-                update_feeds || exit 1
-                run_menuconfig
-                start_build
-                break
-                ;;
-            2)
-                make clean
-                rm -f .config
-                select_target
-                make defconfig
-                run_menuconfig
-                start_build
-                break
-                ;;
-            3)
-                make clean
-                start_build
-                break
-                ;;
-            *)
-                echo -e "${BOLD_RED}INVALID CHOICE. PLEASE ENTER 1, 2, OR 3.${RESET}"
-                ;;
-        esac
-    done
-}
-
-# MAIN FLOW
 check_git
 main_menu
-define_deps
-install_deps
 
 if [ -d "$distro" ]; then
     rebuild_menu
