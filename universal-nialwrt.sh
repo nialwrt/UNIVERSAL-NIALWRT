@@ -137,11 +137,19 @@ run_menuconfig() {
     echo -e "${BOLD_GREEN}CONFIGURATION SAVED.${RESET}"
 }
 
+get_version() {
+    version_tag=$(git describe --tags --exact-match 2>/dev/null || echo "")
+    if [ -n "$version_tag" ]; then
+        version_branch=""
+    else
+        version_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+    fi
+}
+
 start_build() {
     while true; do
         echo -e "${BOLD_YELLOW}DOWNLOADING SOURCES...${RESET}"
         make download -j"$(nproc)"
-
         echo -e "${BOLD_YELLOW}BUILDING WITH $(nproc) CORES...${RESET}"
         local start=$(date +%s)
 
@@ -149,7 +157,6 @@ start_build() {
             local dur=$(( $(date +%s) - start ))
             printf "${BOLD_GREEN}BUILD COMPLETED IN %02dh %02dm %02ds${RESET}\n" \
                 $((dur / 3600)) $(((dur % 3600) / 60)) $((dur % 60))
-
             echo -e "${BOLD_BLUE}OUTPUT: $(pwd)/bin/targets/${RESET}"
 
             get_version
@@ -168,15 +175,6 @@ start_build() {
             run_menuconfig
         fi
     done
-}
-
-get_version() {
-    version_tag=$(git describe --tags --exact-match 2>/dev/null || echo "")
-    if [ -n "$version_tag" ]; then
-        version_branch=""
-    else
-        version_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
-    fi
 }
 
 cleanup() {
