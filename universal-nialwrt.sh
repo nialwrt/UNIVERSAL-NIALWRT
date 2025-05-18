@@ -98,7 +98,6 @@ rebuild_menu() {
                 break
                 ;;
             3)
-                make clean
                 start_build
                 break
                 ;;
@@ -152,9 +151,6 @@ get_version() {
 
 start_build() {
     while true; do
-        echo -e "${BOLD_YELLOW}DOWNLOADING SOURCES...${RESET}"
-        make download -j"$(nproc)"
-
         echo -e "${BOLD_YELLOW}BUILDING WITH $(nproc) CORES...${RESET}"
         local start=$(date +%s)
 
