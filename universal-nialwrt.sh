@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 script_path="$(realpath "$0")"
 
 RESET='\033[0m'
@@ -22,6 +24,8 @@ BOLD_MAGENTA="${BOLD}${MAGENTA}"
 BOLD_CYAN="${BOLD}${CYAN}"
 BOLD_WHITE="${BOLD}${WHITE}"
 NC="${RESET}"
+
+trap cleanup EXIT
 
 prompt() {
     local input
@@ -54,23 +58,11 @@ main_menu() {
             1)
                 distro="immortalwrt"
                 repo="https://github.com/immortalwrt/immortalwrt.git"
-                deps=(ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential
-                    bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib
-                    g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev
-                    libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev
-                    libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano
-                    ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils
-                    python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs
-                    upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd)
-                echo -e "${BOLD_GREEN}SUCCESS SELECTED: ImmortalWrt${RESET}"
                 break
                 ;;
             2)
                 distro="openwrt"
                 repo="https://github.com/openwrt/openwrt.git"
-                deps=(build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git
-                    libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget)
-                echo -e "${BOLD_GREEN}SUCCESS SELECTED: OpenWrt${RESET}"
                 break
                 ;;
             *)
@@ -78,6 +70,40 @@ main_menu() {
                 ;;
         esac
     done
+}
+
+define_deps() {
+    case "$distro" in
+        immortalwrt)
+            deps=(ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential
+                bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib
+                g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev
+                libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev
+                libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano
+                ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils
+                python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs
+                upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd)
+            ;;
+        openwrt)
+            deps=(build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git
+                libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget)
+            ;;
+    esac
+}
+
+install_deps() {
+    if ! command -v sudo &>/dev/null; then
+        SUDO=""
+    else
+        SUDO="sudo"
+    fi
+
+    echo -e "${BOLD_YELLOW}INSTALLING DEPENDENCIES FOR $distro...${RESET}"
+    $SUDO apt update -y && $SUDO apt full-upgrade -y
+    $SUDO apt install -y "${deps[@]}" || {
+        echo -e "${BOLD_RED}FAILED TO INSTALL DEPENDENCIES. PLEASE CHECK YOUR SYSTEM AND TRY AGAIN.${RESET}"
+        exit 1
+    }
 }
 
 select_target() {
@@ -102,18 +128,21 @@ update_feeds() {
     ./scripts/feeds update -a && ./scripts/feeds install -a || return 1
     echo -ne "${BOLD_BLUE}EDIT FEEDS IF NEEDED, THEN PRESS ENTER: ${RESET}"
     read
-    echo -e "${BOLD_YELLOW}UPDATING FEEDS...${RESET}"
     ./scripts/feeds update -a && ./scripts/feeds install -a || return 1
     echo -e "${BOLD_GREEN}FEEDS UPDATED.${RESET}"
-
 }
+
 run_menuconfig() {
     echo -e "${BOLD_YELLOW}RUNNING MENUCONFIG...${RESET}"
-    make menuconfig && echo -e "${BOLD_GREEN}CONFIGURATION SAVED.${RESET}" || echo -e "${BOLD_RED}MENUCONFIG FAILED.${RESET}"
+    make menuconfig
+    echo -e "${BOLD_GREEN}CONFIGURATION SAVED.${RESET}"
 }
 
 start_build() {
     while true; do
+        echo -e "${BOLD_YELLOW}DOWNLOADING SOURCES...${RESET}"
+        make download -j"$(nproc)"
+
         echo -e "${BOLD_YELLOW}BUILDING WITH $(nproc) CORES...${RESET}"
         local start=$(date +%s)
 
@@ -121,7 +150,12 @@ start_build() {
             local dur=$(( $(date +%s) - start ))
             printf "${BOLD_GREEN}BUILD COMPLETED IN %02dh %02dm %02ds${RESET}\n" \
                 $((dur / 3600)) $(((dur % 3600) / 60)) $((dur % 60))
+
             echo -e "${BOLD_BLUE}OUTPUT: $(pwd)/bin/targets/${RESET}"
+
+            get_version
+            echo -e "${BOLD_YELLOW}VERSION:${version_branch}${version_tag}${RESET}"
+
             break
         else
             echo -e "${BOLD_RED}BUILD FAILED: DEBUGGING WITH VERBOSE OUTPUT${RESET}"
@@ -137,9 +171,18 @@ start_build() {
     done
 }
 
+get_version() {
+    version_tag=$(git describe --tags --exact-match 2>/dev/null || echo "")
+    if [ -n "$version_tag" ]; then
+        version_branch=""
+    else
+        version_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+    fi
+}
+
 cleanup() {
     echo -e "${BOLD_YELLOW}CLEANING UP...${RESET}"
-    rm -- "$script_path"
+    rm -f -- "$script_path"
 }
 
 build_menu() {
@@ -153,7 +196,6 @@ build_menu() {
     update_feeds || exit 1
     run_menuconfig
     start_build
-    cleanup
 }
 
 rebuild_menu() {
@@ -179,7 +221,6 @@ rebuild_menu() {
                 update_feeds || exit 1
                 run_menuconfig
                 start_build
-                cleanup
                 break
                 ;;
             2)
@@ -189,13 +230,11 @@ rebuild_menu() {
                 make defconfig
                 run_menuconfig
                 start_build
-                cleanup
                 break
                 ;;
             3)
                 make clean
                 start_build
-                cleanup
                 break
                 ;;
             *)
@@ -207,13 +246,8 @@ rebuild_menu() {
 
 check_git
 main_menu
-
-echo -e "${BOLD_YELLOW}INSTALLING DEPENDENCIES FOR $distro...${RESET}"
-sudo apt update -y && sudo apt full-upgrade -y
-sudo apt install -y "${deps[@]}" || {
-    echo -e "${BOLD_RED}FAILED TO INSTALL DEPENDENCIES. PLEASE CHECK YOUR SYSTEM AND TRY AGAIN.${RESET}"
-    exit 1
-}
+define_deps
+install_deps
 
 if [ -d "$distro" ]; then
     rebuild_menu
