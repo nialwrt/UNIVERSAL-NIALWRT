@@ -25,8 +25,8 @@ main_menu() {
     echo -e "${BOLD_MAGENTA}  TELEGRAM: @NIALVPN                   ${RESET}"
     echo -e "${BOLD_MAGENTA}--------------------------------------${RESET}"
     echo -e "${BOLD_BLUE}BUILD MENU:${RESET}"
-    echo -e "1) ImmortalWrt"
-    echo -e "2) OpenWrt"
+    echo -e "1) IMMORTALWRT"
+    echo -e "2) OPENWRT"
 
     while true; do
         echo -ne "${BOLD_BLUE}CHOOSE OPTION: ${RESET}"
