@@ -176,6 +176,7 @@ get_version() {
 }
 
 start_build() {
+    get_version
     while true; do
         echo -e "${BOLD_YELLOW}STARTING BUILD WITH $(nproc) CORES...${RESET}"
         local start=$(date +%s)
