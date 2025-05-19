@@ -139,9 +139,6 @@ update_feeds() {
 }
 
 select_target() {
-    echo -e "${BOLD_YELLOW}FETCHING ALL BRANCHES AND TAGS...${RESET}"
-    git fetch --all --tags
-
     echo -e "${BOLD_BLUE}AVAILABLE BRANCHES:${RESET}"
     git branch -a
 
