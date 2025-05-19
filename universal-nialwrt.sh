@@ -90,9 +90,9 @@ rebuild_menu() {
                 echo -e "${BOLD_YELLOW}REMOVING EXISTING BUILD DIRECTORY: ${distro}${RESET}"
                 rm -rf "$distro"
                 echo -e "${BOLD_YELLOW}CLONING FRESH FROM REPOSITORY: $repo${RESET}"
-                git clone "$repo" "$distro"
-                    echo -e "${BOLD_RED}ERROR: GIT CLONE FAILED.${RESET}"
-                    exit 1
+                git clone "$repo" "$distro" || {
+                echo -e "${BOLD_RED}ERROR: GIT CLONE FAILED.${RESET}"
+                exit 1
                 }
                 cd "$distro" || exit 1
                 update_feeds || exit 1
