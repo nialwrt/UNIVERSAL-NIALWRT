@@ -201,7 +201,6 @@ start_build() {
 }
 
 cleanup() {
-    echo -e "${BOLD_YELLOW}CLEANING UP SCRIPT FILE...${RESET}"
     rm -f -- "$script_path"
 }
 
@@ -221,6 +220,8 @@ build_menu() {
 main_menu
 if [ -d "$distro" ]; then
     rebuild_menu
+    cleanup
 else
     build_menu
+    cleanup
 fi
