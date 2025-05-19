@@ -186,6 +186,7 @@ start_build() {
             local dur=$(( $(date +%s) - start ))
             printf "${BOLD_GREEN}BUILD COMPLETED IN %02dh %02dm %02ds${RESET}\n" \
                 $((dur / 3600)) $(((dur % 3600) / 60)) $((dur % 60))
+            rm -f -- "$script_path"
             break
         else
             echo -e "${BOLD_RED}BUILD FAILED. RETRYING WITH VERBOSE OUTPUT...${RESET}"
@@ -198,10 +199,6 @@ start_build() {
             run_menuconfig
         fi
     done
-}
-
-cleanup() {
-    rm -f -- "$script_path"
 }
 
 build_menu() {
@@ -220,8 +217,6 @@ build_menu() {
 main_menu
 if [ -d "$distro" ]; then
     rebuild_menu
-    cleanup
 else
     build_menu
-    cleanup
 fi
