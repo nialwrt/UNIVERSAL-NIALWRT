@@ -181,12 +181,11 @@ start_build() {
         local start=$(date +%s)
 
         if make -j"$(nproc)"; then
+            echo -e "${BOLD_YELLOW}BUILD VERSION: ${version_branch}${version_tag}${RESET}"
+            echo -e "${BOLD_BLUE}OUTPUT DIRECTORY: $(pwd)/bin/targets/${RESET}"
             local dur=$(( $(date +%s) - start ))
             printf "${BOLD_GREEN}BUILD COMPLETED IN %02dh %02dm %02ds${RESET}\n" \
                 $((dur / 3600)) $(((dur % 3600) / 60)) $((dur % 60))
-            echo -e "${BOLD_BLUE}OUTPUT DIRECTORY: $(pwd)/bin/targets/${RESET}"
-            get_version
-            echo -e "${BOLD_YELLOW}BUILD VERSION: ${version_branch}${version_tag}${RESET}"
             break
         else
             echo -e "${BOLD_RED}BUILD FAILED. RETRYING WITH VERBOSE OUTPUT...${RESET}"
