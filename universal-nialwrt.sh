@@ -81,7 +81,7 @@ rebuild_menu() {
     echo -e "1) FIRMWARE & PACKAGE UPDATE (FULL REBUILD)"
     echo -e "2) FIRMWARE UPDATE (FAST REBUILD)"
     echo -e "3) CONFIG UPDATE (FAST REBUILD)"
-    echo -e "3) EXISTING UPDATE (NO CHANGES)"
+    echo -e "4) EXISTING UPDATE (NO CHANGES)"
 
     while true; do
         echo -ne "${BOLD_BLUE}CHOOSE OPTION: ${RESET}"
